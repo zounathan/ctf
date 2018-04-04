@@ -1,11 +1,14 @@
 Introduction
+
 I take this challenge as a variation of FSOP (File Stream Oriented Programming). 
 The glibc library given in this challenge is already patched with an extra check on the validity of the vtable of fake file stream. 
 
 Vulnerability
+
 There is an one-byte out-of-bound write in the update function. 
 
 Exploitation
+
 With off-by-one, we can leak the heap and libc address.
 The problem is how to exploit. we can't leak the mmap address, neither program address.
 1, Overwrite the __malloc_hook.
