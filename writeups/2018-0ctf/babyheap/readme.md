@@ -11,8 +11,10 @@ Exploitation
 
 With off-by-one, we can leak the heap and libc address.
 The problem is how to exploit. we can't leak the mmap address, neither program address.
+
 1, Overwrite the __malloc_hook.
 - we can't allocate heap near __malloc_hook. If we use the unsorted bin attack to overwrite IO_buf_end, the function read can't get enough length to overwrite the __malloc_hook
+
 2, House of orange
 - To use this method, there are two problems
 - How to set the small bin[4](size 0x60)
