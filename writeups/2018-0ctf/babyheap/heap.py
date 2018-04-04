@@ -1,6 +1,6 @@
 from pwn import *
 
-elf = ELF('/home/nathan/share/babyheap')
+elf = ELF('./babyheap')
 p = process(elf.path)
 print proc.pidof(p)[0]
 raw_input()
