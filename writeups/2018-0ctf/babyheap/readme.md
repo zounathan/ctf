@@ -17,7 +17,11 @@ The problem is how to exploit. we can't leak the mmap address, neither program a
 
 Above all, the final exploit works as below:
 (1) Use the one-byte out-of-bound vulnerability to create overlapping chunk. And leak the base address of libc.
+
 (2) Use the consolidation to put heap to small bin[4]
+
 (3) Use update function to overwrite the bk of chunk linked in unsorted bin with &_IO_list_all – 0x10 and trigger the unsorted bin attack.
+
 (4) Create the fake _IO_file struct, and use the _IO_wstr_jumps as vtable to bypass the check.
+
 (5) Trigger abort routine, and execute the onegadget.
