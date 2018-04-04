@@ -16,6 +16,7 @@ The problem is how to exploit. we can't leak the mmap address, neither program a
 - bypass the check of vtable
 
 Above all, the final exploit works as below:
+
 (1) Use the one-byte out-of-bound vulnerability to create overlapping chunk. And leak the base address of libc.
 
 (2) Use the consolidation to put heap to small bin[4]
