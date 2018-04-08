@@ -5,3 +5,29 @@ Seccomp
 ● 稍微复杂的操作:可以利用filter来进行简单的计算以及条件判断;
 ● 遇上不同的syscall时要采取什么措施(kill,allow,trap等)
 ● 出现不谨慎或者误用的情况还是可以绕过这些限制
+
+Enable seccomp
+● bpf(bekeley packet filter):直接使用prctl开
+启seccomp
+○ 之后再编写bpf代码来实现具体逻辑
+○ 最初主要工作是用来过滤封包
+● libseccomp:
+○ seccomp_init
+○ seccomp_rule_add
+○ seccomp_load
+○ 其实是对bpf做了封装，省去使用者学习bpf语
+法的过程
+
+prctl调用以及写bpf 的流程
+● 第一件事情！
+● 设置PR_SET_NO_NEW_PROVS这个bit为1
+● 否则execve之后的进程将脱离这个bpf的限制
+
+PR_SET_SECCOMP
+● 指定当前seccomp的类型是哪个
+● prctl的两种模式
+○ SECCOMP_MODE_STRICT严格模式
+○ SECCOMP_MODE_FILTER
+● 严格模式只允许read/write/exit,整个程序基本只能输入输出了
+● 更为常见的以白名单、黑名单形式出现的是SECCOMP_MODE_FILTER
+● 一旦设为黑名单，就要提高警惕，注意是否有可能出bug
