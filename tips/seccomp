@@ -31,3 +31,40 @@ PR_SET_SECCOMP
 ● 严格模式只允许read/write/exit,整个程序基本只能输入输出了
 ● 更为常见的以白名单、黑名单形式出现的是SECCOMP_MODE_FILTER
 ● 一旦设为黑名单，就要提高警惕，注意是否有可能出bug
+
+Berkeley Packet Filter
+● 可以用学习一个新的processor的想法来理解一些东西
+● 最初，BPF的出现是用来实现防火墙，iptables等的过滤封包的功能的
+● /usr/include/linux/filter.h
+
+写具体的filter指令——BPF_STMT
+● BPF_STMT(code, k): 打包一条指令(省去自己直接填的麻烦)
+● Code
+○ /usr/include/linux/bpf_common.h
+○ BPF_LD,BPF_LDX
+○ BPF_ST,BPF_STX
+○ BPF_ALU
+○ BPF_RET
+● kernel的代码里有解释器
+○ filter.c(一个旧版kernel用的(新版内核实现很复杂看不懂)，可以来简单的参考)
+○ https://www.kernel.org/pub/linux/kernel/people/marcelo/linux-2.4/net/core/filter.c
+○ 要找各种指令的意义可以在上面的链接看(sk_fun_filter)
+○ 现在? jit for bpf; eBPF
+
+最简单的例子——所有syscall都允许
+● BPF_K:指令后要接的参数是常数(换成A就是接的参数为寄存器)
+● SECCOMP_RET_ALLOW:return allow
+
+dump bpf内容的方法
+● 用gdb去dump,prctl的第三个参数内容(参数的第一个成员是长度)
+● gdb命令如下
+○ dump memory 输出 起始 结束
+○ dump memory output 0x00007fffffffe570 0x00007fffffffe570+8
+
+对bpf程序反编译的方法
+● libseccomp有自带的反编译工具
+○ scmp_bpf_disasm
+○ https://github.com/seccomp/libseccomp/blob/master/tools/scmp_bpf_disasm.c
+● 可以对照头文件来进行阅读
+○ seccomp.h 里面有一些非标准bpf的参数
+● ./scmp_bpf_disasm < dump
