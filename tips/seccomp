@@ -68,3 +68,167 @@ dump bpf内容的方法
 ● 可以对照头文件来进行阅读
 ○ seccomp.h 里面有一些非标准bpf的参数
 ● ./scmp_bpf_disasm < dump
+
+返回时采取的操作
+● KILL、TRAP、ERRNO、TRACE、ALLOW
+● Linux/include/uapi/linux/seccomp.h
+
+#define SECCOMP_RET_KILL_PROCESS 0x80000000U /* kill the process */
+#define SECCOMP_RET_KILL_THREAD	 0x00000000U /* kill the thread */
+#define SECCOMP_RET_KILL	 SECCOMP_RET_KILL_THREAD
+#define SECCOMP_RET_TRAP	 0x00030000U /* disallow and force a SIGSYS */
+#define SECCOMP_RET_ERRNO	 0x00050000U /* returns an errno */
+#define SECCOMP_RET_TRACE	 0x7ff00000U /* pass to a tracer or disallow */
+#define SECCOMP_RET_LOG		 0x7ffc0000U /* allow after logging */
+#define SECCOMP_RET_ALLOW	 0x7fff0000U /* allow */
+
+/* Masks for the return value sections. */
+#define SECCOMP_RET_ACTION_FULL	0xffff0000U
+#define SECCOMP_RET_ACTION	0x7fff0000U
+#define SECCOMP_RET_DATA	0x0000ffffU
+
+取操作数的方法(BPF_LD, BPF_LDX)
+● LD进入A寄存器， LDX进入寄存器
+● 根据syscall决定做什么操作,我们需要看syscall number
+● 从某个address 处load data到register A或X
+○ Load width: BPF_W, BPF_H,BPF_B
+○ Adress ref: BPF_ABS,
+○ load常数进register: BPF_IMM
+● 查看data这个结构,可以取nr/arch/pc/args
+● Linux/include/uapi/linux/seccomp.h
+
+struct seccomp_data
+struct seccomp_data {
+	int nr;
+	__u32 arch;
+	__u64 instruction_pointer;
+	__u64 args[6];
+};
+● 我们取数据以这个结构开头为基地址
+● nr:syscall number
+● arch:define在audit.h
+○ i386: 0x40000003
+○ x86-64: 0xc000003e
+● instruction_pointer:syscall 那行指令的地址
+● args:syscall 参数(最多六个参数的数组)
+○ i386: ebx, ecx, edx, esi, edi
+○ x86-64: rdi, rsi, rdx, r10, r8, r9
+
+条件跳转指令
+● 跳转之前会有相应的比较指令来产生跳转条件
+● BPF_JUMP(BPF_JMP+<cond>, K , T , F)
+● 判断式: A <cond> K
+○ pc += (A <cond> K) ? T:F
+● T/F:条件成立/不成立时,要往下跳过几条指令
+● 指令
+○ BPF_JA //pc += k
+○ BPF_JEQ // ==
+○ BPF_JGT // >
+○ BPF_JSET // &
+
+根本不想手写bpf，但是又想用bpf这种形式？
+● kafel (https://github.com/google/kafel)
+● Kafel is a language and library for specifying syscall filtering policies. The policies
+are compiled into BPF code that can be used with seccomp-filter.
+
+绕过seccomp的第一个技巧:retf切换架构
+如果疏漏了对架构进行检查
+● 1.得到在目标进程内跑shellcode的能力
+● 2.使用以下代码可以在64位与32位中切换
+● i386和x86-64下的syscall编号不一样
+● execve在i386下是11,x86-64下是59
+● 黑名单可能会漏掉
+● 白名单也有可能会漏掉
+○ 因为11在x86-64下是munmap,是可能打开的
+写shellcode的要点
+● 1.首先在转换arch前把栈迁移走,例如shellcode自己开个.bss段
+● 2.转换架构
+● 3.使用转换完之后的架构的汇编写
+retf和ret有什么区别
+● 除了ret时会pop的寄存器，还会pop掉CS这个寄存器，
+○ 栈上要多放CS寄存器的值
+● cs
+○ 32bit——0x23 64bit——0x32
+● 标识着当前arch到底是64bit还是32bit
+● 使用retf技巧的ctf实战案例
+○ Tokyo Westerns MMA 2016 - Diary
+
+绕过seccomp的第二个技巧:x32模式
+● x32模式是在x86-64下的一种特殊模式,使用64位寄存器+32位地址
+● x32中nr会加__x32_SYSCALL_BIT (0x40000000)
+● /usr/include/asm/unistd_x32.h
+● 即原本的syscall number +0x40000000,是完全一样的作用
+
+绕过seccomp的第三个技巧:特殊syscall
+● 几个奇怪的系统调用号，虽然是给x32用的,但是x86-64下一样用
+● 最普通的:59
+● 520号:也是系统调用
+● 依照前面x32模式
+○ 59,
+○ 520,
+○ 59+0x40000000,
+○ 520+0x40000000
+○ 全都是execve
+
+使用ptrace系统调用来实现沙盒功能
+● ptrace的功能
+○ process trace
+● 作为tracer来追踪tracee的执行
+● 拦截特定事件(TRAP, SYSCALL)
+● 读写tracee的内存，cpu上下文等
+● 使用ptrace来实现的为人所熟知的工具:gdb (strace也是)
+
+trace子进程的执行
+● Child中call ptrace(PTRACE_TRACEME)
+● Parent中使用waitpid(pid)等待event发生
+● 使用ptrace(PTRACE_CONT)继续执行
+○ 如果没有遇到断点0xCC会一直跑
+○ 要trace syscall时,可以用ptrace(PTRACE_SYSCALL)
+● 使用ptrace(PTRACE_PEEKUSER)来读取cpu的上下文
+○ addr 为struct user中的offset
+○ sys/user.h(https://code.woboq.org/userspace/glibc/sysdeps/unix/sysv/linux/x86/sys/user.h.html)
+○ orig_rax为syscall number
+● Syscall 会分别在enter和exit时各中断一次(有趣的一点)
+○ ptrace syscall的时候会断两次，进入退出都会各断一次
+○ Exit时可以从rax取得返回值
+
+用ptrace来读取tracee的内存
+● ptrace(PTRACE_PEEKDATA)
+● 固定读一个word(4byte)
+● long rax = ptrace(PTRACE_PEEKUSER, pid,
+offsetof(struct user, regs.rax), 0);
+● int d = ptrace(PTRACE_PEEKDATA, pid, rax, 0);
+
+绕过ptrace沙箱的技巧:通过fork脱离tracer
+● ptrace默认只trace最初trace_me的那个进程，利用fork,使得fork出来的进程不会被
+继续trace
+● 如果不做特定处理的情况下，child如果有fork过，tracer并不会再去trace那个新的
+fork出来的子进程
+● 只要ptrace 没有跟踪好fork,vfork,clone, fork后child都不会被ptrace继续跟踪
+● 正确的做法?
+○ 跟踪好fork或者直接禁止直接fork
+○ 设PTRACE_O_TRACECLONE选项,有fork类操作时候可以跟到
+
+绕过ptrace沙箱的技巧:通过杀父进程脱离tracer
+● Kill Parent by
+○ kill(getpid(), 9)
+○ ppid 无法取得时,可以尝试pid-1
+○ /proc/self/stat中可以拿到pid和ppid
+○ kill(-1,9)可以干掉除了自己以外的process
+● 正确做法？
+○ 设好PTRACE_O_EXITKILL可以让tracer结束时把所有tracee kill掉
+
+其他常见可用于实现类似沙箱功能的工具
+● 细粒度的指令插桩类工具
+○ Intel Pintool
+○ DynamoRIO
+● Edge浏览器使用AppContainer
+○ The Awesome AppJailLaucher 也用AppContainer实现
+● Chrome浏览器windows沙箱
+○ A restricted token
+○ The Windows job object
+○ The Windows desktop object
+○ The integrity levels
+● SELinux
+● mandatory access control/discretionary access control
+● ...
