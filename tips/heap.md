@@ -1,6 +1,13 @@
 Heap 
 =
-# Chunk
+memory allocators
+> * dlmalloc – General purpose allocator
+> * `ptmalloc2 – glibc`
+> * jemalloc – FreeBSD and Firefox
+> * tcmalloc – Google
+> * libumem – Solaris
+
+# Bins
 
 # Main arena
 
