@@ -26,9 +26,9 @@ For 64 bit systems:
 > * When thread 1 and thread 2 calls malloc for the first time, a new arena is created for them and its used without any contention. Until this point threads and arena have one-to-one mapping.
 > * When thread 3 calls malloc for the first time, number of arena limit is calculated. Here arena limit is crossed, hence try `reusing` existing arena’s (Main arena or Arena 1 or Arena 2)
 >> Reuse:
->>> * Once loop over the available arenas, while looping try to lock that arena.
->>> * If locked successfully (lets say main arena is locked successfully), return that arena to the user.
->>> * If no arena is found free, block for the arena next in line.
+>>   * Once loop over the available arenas, while looping try to lock that arena.
+>>   * If locked successfully (lets say main arena is locked successfully), return that arena to the user.
+>>   * If no arena is found free, block for the arena next in line.
 > * Now when thread 3 calls malloc (second time), malloc will try to use last accessed arena (main arena). If main arena is free its used else thread3 is blocked until main arena gets freed. Thus now main arena is shared among main thread and thread 3.
 
 ## Multiple Heaps
@@ -135,9 +135,9 @@ nextchunk-> +-+-+-+-+-+-+-+-+-+-+-+-+-+
 > If the previous chunk is free, this field contains the size of previous chunk. Else if previous chunk is allocated, this field contains previous chunk’s user data.
 > * size<br>
 > This field contains the size of this allocated chunk. Last 3 bits of this field contains flag information.
->> * PREV_INUSE (P) – This bit is set when previous chunk is allocated.
->> * IS_MMAPPED (M) – This bit is set when chunk is mmap’d.
->> * NON_MAIN_ARENA (N) – This bit is set when this chunk belongs to a thread arena.
+>   * PREV_INUSE (P) – This bit is set when previous chunk is allocated.
+>   * IS_MMAPPED (M) – This bit is set when chunk is mmap’d.
+>   * NON_MAIN_ARENA (N) – This bit is set when this chunk belongs to a thread arena.
 
 ## Free chunk
 ```
