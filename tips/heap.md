@@ -186,6 +186,27 @@ nextchunk-> +-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 ## Fast bin
 > Chunks of size 16 to 80 bytes(x64 32 to 128 bytes) is called a fast chunk. Bins holding fast chunks are called fast bins. Among all the bins, fast bins are faster in memory allocation and deallocation.
+> * Number of bins – 10
+>   * Each fast bin contains a single linked list (a.k.a binlist) of free chunks. Single linked list is used since in fast bins chunks are not removed from the middle of the list. Both addition and deletion happens at the front end of the list – LIFO.
+> * Chunk size – 8 bytes apart
+>   * Fast bins contain a binlist of chunks whose sizes are 8 bytes apart. ie) First fast bin (index 0) contains binlist of chunks of size 16 bytes, second fast bin (index 1) contains binlist of chunks of size  24 bytes and so on…
+>   * Chunks inside a particular fast bin are of same sizes.
+> * During malloc initialization, maximum fast bin size is set to 64 (!80) bytes. Hence by default chunks of size 16 to 64 is categorized as fast chunks.
+> * No Coalescing – Two chunks which are free can be adjacent to each other, it doesnt get combined into single free chunk. No coalescing could result in external fragmentation but it speeds up free!!
+> * malloc(fast chunk) –
+>   * Initially fast bin max size and fast bin indices would be empty and hence eventhough user requested a fast chunk, instead of fast bin code, small bin code tries to service it.
+>   * Later when its not empty, fast bin index is calculated to retrieve its corresponding binlist.
+>   * First chunk from the above retrieved binlist is removed and returned to the user.
+> * free(fast chunk) –
+>   * Fast bin index is calculated to retrieve its corresponding binlist.
+>   * This free chunk gets added at the front position of the above retrieved binlist.
+![](http://epo.alicdn.com/image/420rc04q9ad0.png)
+
+## small bin
+
+## large bin
+
+## unsorted bin
 
 # Malloc
 
