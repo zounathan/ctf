@@ -185,14 +185,12 @@ nextchunk-> +-+-+-+-+-+-+-+-+-+-+-+-+-+
 >   * Bin 64 to Bin 126 – Large bin
 
 ## Fast bin
-> Chunks of size 16 to 80 bytes(x64 32 to 128 bytes) is called a fast chunk. Bins holding fast chunks are called fast bins. Among all the bins, fast bins are faster in memory allocation and deallocation.
-> * Number of bins – 10
->   * Each fast bin contains a single linked list (a.k.a binlist) of free chunks. Single linked list is used since in fast bins chunks are not removed from the middle of the list. Both addition and deletion happens at the front end of the list – LIFO.
-> * Chunk size – 8 bytes apart
->   * Fast bins contain a binlist of chunks whose sizes are 8 bytes apart. ie) First fast bin (index 0) contains binlist of chunks of size 16 bytes, second fast bin (index 1) contains binlist of chunks of size  24 bytes and so on…
->   * Chunks inside a particular fast bin are of same sizes.
-> * During malloc initialization, maximum fast bin size is set to 64 (!80) bytes. Hence by default chunks of size 16 to 64 is categorized as fast chunks.
-> * No Coalescing – Two chunks which are free can be adjacent to each other, it doesnt get combined into single free chunk. No coalescing could result in external fragmentation but it speeds up free!!
+> Chunks of size `16 to 64 bytes(x64 32 to 128 bytes)` is called a fast chunk. Bins holding fast chunks are called fast bins. Among all the bins, fast bins are faster in memory allocation and deallocation.
+> * 10 fast bins in total
+> * Single linked list. Both addition and deletion happens at the front end of the list – LIFO.
+> * Chunk size – 8 bytes apart(x64 16 bytes)
+> * `No Coalescing` – Two chunks which are free can be adjacent to each other, it doesnt get combined into single free chunk. No coalescing could result in external fragmentation but it speeds up free!!
+> * Will not clear PREV_INUSE when fast chunk is freed.
 > * malloc(fast chunk) –
 >   * Initially fast bin max size and fast bin indices would be empty and hence eventhough user requested a fast chunk, instead of fast bin code, small bin code tries to service it.
 >   * Later when its not empty, fast bin index is calculated to retrieve its corresponding binlist.
@@ -203,22 +201,81 @@ nextchunk-> +-+-+-+-+-+-+-+-+-+-+-+-+-+
 ![](http://epo.alicdn.com/image/420rc04q9ad0.png)
 
 ## small bin
+> Chunks of size `less than 512 bytes` is called as small chunk. Bins holding small chunks are called small bins. Small bins are faster than large bins (but slower than fast bins) in memory allocation and deallocation.
+> * Circular double linked list
+> * 62 small bins in total
+> * Chunk size – 8 bytes apart(x64 16 bytes), chunk sizes are the same in each bin
+> * First In First Out
+> * `Coalescing` – Two chunks which are free cant be adjacent to each other, it gets combined into single free chunk. 
+> * malloc(small chunk) –
+>   * Initially all small bins would be NULL and hence eventhough user requested a small chunk, instead of small bin code, unsorted bin code tries to service it.
+>   * Also during the first call to malloc, small bin and large bin datastructures (bins) found in malloc_state is initialized ie) bins would point to itself signifying they are empty.
+>   * Later when small bin is non empty, last chunk from its corresponding binlist is removed and returned to the user.
+> * free(small chunk) –
+>   * While freeing this chunk, check if its previous or next chunk is free, if so coalesce ie) unlink those chunks from their respective linked lists and then add the new consolidated chunk into the beginning of unsorted bin’s linked list.
 
 ## large bin
+> Chunks of size `greater than equal to 512` is called a large chunk. Bins holding large chunks are called large bins. Large bins are slower than small bins in memory allocation and deallocation.
+> * Circular double linked list
+> * First In First Out
+> * 63 large bins in total
+>   * Out of these 63 bins:
+>     * 32 bins contain binlist of chunks of size which are 64 bytes apart. ie) First large bin (Bin 65) contains binlist of chunks of size 512 bytes to 568 bytes, second large bin (Bin 66) contains binlist of chunks of size 576 bytes to 632 bytes and so on…
+>     * 16 bins contain binlist of chunks of size which are 512 bytes apart.
+>     * 8 bins contain binlist of chunks of size which are 4096 bytes apart.
+>     * 4 bins contain binlist of chunks of size which are 32768 bytes apart.
+>     * 2 bins contain binlist of chunks of size which are 262144 bytes apart.
+>     * 1 bin contains a chunk of remaining size.
+>   * Unlike small bin, `chunks inside a large bin are NOT of same size`. Hence they are stored in decreasing order. Largest chunk is stored in the front end while the smallest chunk is stored in the rear end of its binlist.
+> * `Coalescing` – Two chunks which are free cant be adjacent to each other, it gets combined into single free chunk.
+> * malloc(large chunk) –
+>   * Initially all large bins would be NULL and hence eventhough user requested a large chunk, instead of large bin code, next largest bin code tries to service it.
+>   * Also during the first call to malloc, small bin and large bin datastructures (bins) found in malloc_state is initialized ie) bins would point to itself signifying they are empty.
+>   * Later when large bin is non empty, if the largest chunk size (in its binlist) is greater than user requested size, binlist is walked from rear end to front end, to find a suitable chunk whose size is near/equal to user requested size. Once found, that chunk is split into two chunks
+>     * User chunk (of user requested size) – returned to user.
+>     * Remainder chunk (of remaining size) – added to unsorted bin.
+>   * If largest chunk size (in its binlist) is lesser than user requested size, try to service user request by using the next largest (non empty) bin. Next largest bin code scans the binmaps to find the next largest bin which is non empty, if any such bin found, a suitable chunk from that binlist is retrieved, split and returned to the user. If not found, try serving user request using top chunk.
+> * free(large chunk) – Its procedure is similar to free(small chunk).<br>
 
 ## unsorted bin
+> When small or large chunk gets freed instead of adding them in to their respective bins, its gets added into unsorted bin.<br>
+> In the next memory allocation, it will search the unsorted bin first. If the Unsorted bin doesn't have suitable size, the chunks in Unsorted bin will be put to the corresponding Bins(small or large bins).
+> * Circular double linked list
+> * `1 bin` in total
+> * chunk size > 64 bytes<br>
+![](http://epo.alicdn.com/image/420rc31ppb10.jpg)
 
 # Malloc
+> 1. Search for fast chunks in fast bins
+> 2. Search for chunk of exact size in small bins
+> 3. Loops
+>    1. Check last_remainder in unsorted bin
+>        1. if last_remainder is big enough, split it and mark the remaining chunk as the new
+last_remainder
+>    2. Search unsorted bin
+>        1. return the chunk of exact size, put other chunks into small/large bins
+>    3. Search small bins and large bins for best-fit chunk(not exact size)
+> 4. Use top chunk
 
 # Realloc
 
 # Free
+> 1. Security Check
+> 2. If fast chunk, put into fastbin
+> 3. If previous chunk is free
+>    1. unlink previous chunk, Coalescing
+>    2. put merged chunk into unsorted bin
+> 4. If next chunk is top chunk, merge current chunk to the top; And search the fastbinY, do Coalescing, then put merged chunk into unsorted bin.
+> 5. If next chunk is free
+>    1. unlink next chunk, Coalescing
+>    2. put merged chunk into unsorted bin
 
 # Reference
 > * http://www.freebuf.com/articles/system/151372.html
 > * https://paper.seebug.org/255/#0-tsina-1-29759-397232819ff9a47a7b7e80a40613cfe1
 > * https://www.cnblogs.com/alisecurity/p/5486458.html
 > * https://www.cnblogs.com/alisecurity/p/5520847.html
+> * https://sploitfun.wordpress.com/2015/02/10/understanding-glibc-malloc/comment-page-1/
 
 https://paper.seebug.org/521/
 https://www.slideshare.net/AngelBoy1/play-with-file-structure-yet-another-binary-exploit-technique
