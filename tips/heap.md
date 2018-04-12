@@ -279,6 +279,19 @@ If p=malloc(100)
 5. If next chunk is free
    1. unlink next chunk, Coalescing
    2. put merged chunk into unsorted bin
+* Unlink checks
+```c
+assert(P->fd->bk == P) assert(P->bk->fd == P)
+```
+* Unlink
+```c
+#define unlink( P, BK, FD ) {
+BK = P->bk;
+FD = P->fd;
+FD->bk = BK;
+BK->fd = FD;
+}
+```
 
 # Reference
 * http://www.freebuf.com/articles/system/151372.html
