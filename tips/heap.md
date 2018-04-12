@@ -258,7 +258,17 @@ last_remainder
 4. Use top chunk
 
 # Realloc
-
+If p=malloc(100)
+1. realloc(p,0)=free(p)
+2. realloc(p,100), return p, do nothing
+3. realloc(p,200)
+    1. If next chunk is free, and the size is bigger than (200-100), coalesce p with next chunk and return p.
+    2. If next chunk is allocated, or the size is smaller than (200-100), free p and p=malloc(200)
+4. realooc(p,40)
+    1. The chunk is split into two, 40 and 60
+    2. free the chunk(size 60), and put into unsorted bin
+    3. return p with size 40
+  
 # Free
 1. Security Check
 2. If fast chunk, put into fastbin
