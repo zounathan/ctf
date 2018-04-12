@@ -10,8 +10,8 @@ Stack Overflow
 
 # Exploiting Stack Overflow
 ## Exploiting Without Any Protection
-> 1, Put shellcode on the memory(stack or any with x permission memory).<br>
-> 2, Control EIP to the shellcode memory.<br>
+> 1. Put shellcode on the memory(stack or any with x permission memory).<br>
+> 2. Control EIP to the shellcode memory.<br>
 > * [example - 0x01 Control Flow Hijack 程序流劫持](https://www.tuicool.com/articles/ZruA7bZ)
 > ### Get shellcode
 > * [Pwntools.shellcraft](http://pwntools.readthedocs.io/en/stable/shellcraft.html)
