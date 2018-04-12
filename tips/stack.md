@@ -18,13 +18,13 @@ Stack Overflow
 > * [Metasploit](https://www.offensive-security.com/metasploit-unleashed/msfvenom/)
 
 ## Exploiting With Nonexecutable Protection
-> ### ROP(Return-oriented programming)
->> * [Ret2libc](https://www.tuicool.com/articles/ZruA7bZ)<br>
->> * Stack Pivot<br>
->> * GOT hijack<br>
->>   * With randomization protection, the GOT can be changed to the code address in that function.<br> 
->>   * [0ctf-blackhole](https://kileak.github.io/ctf/2018/0ctf-qual-blackhole/)<br>
->>   * Since the last 3 nibbles of an address won’t be randomized by ASLR, we can overwrite the LSB of alarm got with `0x85` to change it into a neat syscall gadget.<br>
+Using ROP(Return-oriented programming)
+> * [Ret2libc](https://www.tuicool.com/articles/ZruA7bZ)<br>
+> * Stack Pivot<br>
+> * GOT hijack<br>
+>   * With randomization protection, the GOT can be changed to the code address in that function.<br> 
+>   * [0ctf-blackhole](https://kileak.github.io/ctf/2018/0ctf-qual-blackhole/)<br>
+>   * Since the last 3 nibbles of an address won’t be randomized by ASLR, we can overwrite the LSB of alarm got with `0x85` to change it into a neat syscall gadget.<br>
 ```code
 alarm:
 000b8180   mov eax, 0x25
@@ -33,12 +33,18 @@ alarm:
 000b818d   jae 0xb8190
 000b818f   retn
 ```
->> * [DynElf(no libc need)](http://docs.pwntools.com/en/stable/dynelf.html?highlight=DynElf)<br>
->> * [mmap/mprotect](https://www.tuicool.com/articles/IfYZri3)<br>
->> * [Return to dl_resolve(no leak)](http://rk700.github.io/2015/08/09/return-to-dl-resolve)<br>
->> * [SROP(Sigreturn Oriented Programming)](https://blog.csdn.net/zsj2102/article/details/78561112)<br>
->>   * [pwntools.SROP](http://docs.pwntools.com/en/stable/rop/srop.html?highlight=SROP)<br>
+> * [DynElf(no libc need)](http://docs.pwntools.com/en/stable/dynelf.html?highlight=DynElf)<br>
+> * [mmap/mprotect](https://www.tuicool.com/articles/IfYZri3)<br>
+> * [Return to dl_resolve(no leak)](http://rk700.github.io/2015/08/09/return-to-dl-resolve)<br>
+> * [SROP(Sigreturn Oriented Programming)](https://blog.csdn.net/zsj2102/article/details/78561112)<br>
+>   * [pwntools.SROP](http://docs.pwntools.com/en/stable/rop/srop.html?highlight=SROP)<br>
 
->> * x64
->>   * [x64_ROP](https://www.tuicool.com/articles/ZzI7FrI)<br>
->>   * [x64_gadget](https://www.tuicool.com/articles/IfYZri3)
+> * x64
+>   * [x64_ROP](https://www.tuicool.com/articles/ZzI7FrI)<br>
+>   * [x64_gadget](https://www.tuicool.com/articles/IfYZri3)
+
+## Exploiting With Stack Canary Protection
+> The main methods to bypass the stack canary
+> * leak canary
+> * control the got of __stack_chk_fail<br>
+> [Bypassing Stack Cookies](https://www.corelan.be/index.php/2009/09/21/exploit-writing-tutorial-part-6-bypassing-stack-cookies-safeseh-hw-dep-and-aslr/)
