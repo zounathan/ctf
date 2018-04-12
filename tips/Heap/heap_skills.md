@@ -151,6 +151,7 @@ int main (void) {
 }
 ```
 ![](https://docs.google.com/drawings/d/1--VLWTMBoF1RMNTchYu5EFScxGBSw1MovyOi656tgow/pub?w=721&h=834)<br>
+
 glibc malloc does the following, when `free(ptr2)` of vulnerable program gets executed
 * Arena for the chunk that is getting freed is retrieved by invoking `arena_for_chunk` macro.
 ```c
@@ -243,7 +244,7 @@ else
        [ ... ]
 }
 ```
-The same as house of mind, house of lore technique doesn't work.([house of mind](#house of mind))
+The same as house of mind, house of lore technique doesn't work.([house of mind](#house-of-mind))
       
 ## house of orange
 [top chunk size is lesser than user requested size](./heap.md#Top chunk)
@@ -301,7 +302,8 @@ struct _IO_FILE {
 2. put chunk in small bin[4](size 0x60), or small bin[9](size 0xb0)
 3. construct fake vtable->_IO_overflow
 4. malloc
-* [2016 HITCON house of orange]()
+* [2016 HITCON house of orange]()<br>
+
 after libc-2.24, vtable check is added. we can't directly construct fake vtable in heap. Instead, we can use `_IO_str_jumps` and `_IO_wstr_jumps` as vtable.
 * [2018 0ctf babyheap](/writeups/2018-0ctf/babyheap)
 ## _IO_buf_end
