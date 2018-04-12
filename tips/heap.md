@@ -179,7 +179,7 @@ nextchunk-> +-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 > Datastructures used to hold these bins are
 > * fastbinsY: This array hold fast bins.
-> * bins: This array hold unsorted, small and large bins. Totally there are 126 bins and its divided as follows:
+> * bins: This array hold unsorted, small and large bins. Totally there are 126 bins([malloc_state](#malloc_state))
 >   * Bin 1 – Unsorted bin
 >   * Bin 2 to Bin 63 – Small bin
 >   * Bin 64 to Bin 126 – Large bin
