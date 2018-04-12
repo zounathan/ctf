@@ -1,7 +1,16 @@
 Stack Overflow
 =
 # What's the Stack?
-> * [Stack](https://en.wikipedia.org/wiki/Stack_(abstract_data_type))<br>
+> * [Stack](https://en.wikipedia.org/wiki/Stack_(abstract_data_type))
+> * A kind of data structure: first in, last out
+> * Used in function's local memory management
+>   * Local variables
+>   * Calling information
+> * Stack grows by decreasing memory address
+> * esp register always points to the top of stack
+> * Stack operations(x86)
+>   * Push: esp = esp - 4
+>   * Pop: esp = esp + 4
 ![](https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1523505359799&di=87abd9e8831938abe04836ae15d0c8a8&imgtype=0&src=http%3A%2F%2Fimages0.cnblogs.com%2Fblog2015%2F688670%2F201507%2F271950018913915.png)
 # Protection schemes
 > * [Nonexecutable stack(NX)](https://en.wikipedia.org/wiki/NX_bit)
@@ -36,6 +45,7 @@ alarm:
 > * [DynElf(no libc need)](http://docs.pwntools.com/en/stable/dynelf.html?highlight=DynElf)<br>
 > * [mmap/mprotect](https://www.tuicool.com/articles/IfYZri3)<br>
 > * [Return to dl_resolve(no leak need)](http://rk700.github.io/2015/08/09/return-to-dl-resolve)<br>
+>   * lazy bind
 > * [SROP(Sigreturn Oriented Programming)](https://blog.csdn.net/zsj2102/article/details/78561112)<br>
 >   * [pwntools.SROP](http://docs.pwntools.com/en/stable/rop/srop.html?highlight=SROP)<br>
 
