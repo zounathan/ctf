@@ -299,8 +299,7 @@ assert(P->fd->bk == P) assert(P->bk->fd == P)
   * Trigger Unlink(P), We have *X = X - 0x18
   
 # Reference
-* http://www.freebuf.com/articles/system/151372.html
-* https://paper.seebug.org/255/#0-tsina-1-29759-397232819ff9a47a7b7e80a40613cfe1
-* https://www.cnblogs.com/alisecurity/p/5486458.html
-* https://www.cnblogs.com/alisecurity/p/5520847.html
+* https://blog.csdn.net/zdy0_2004/article/details/51485198
 * https://sploitfun.wordpress.com/2015/02/10/understanding-glibc-malloc/comment-page-1/
+* https://paper.seebug.org/255/#0-tsina-1-29759-397232819ff9a47a7b7e80a40613cfe1
+* http://www.freebuf.com/articles/system/151372.html
