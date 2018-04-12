@@ -279,10 +279,6 @@ If p=malloc(100)
 5. If next chunk is free
    1. unlink next chunk, Coalescing
    2. put merged chunk into unsorted bin
-* Unlink checks
-```c
-assert(P->fd->bk == P) assert(P->bk->fd == P)
-```
 * Unlink
 ```c
 #define unlink( P, BK, FD ) {
@@ -292,7 +288,16 @@ FD->bk = BK;
 BK->fd = FD;
 }
 ```
-
+* Unlink checks
+```c
+assert(P->fd->bk == P) assert(P->bk->fd == P)
+```
+* Bypass unlink checks
+  * Find a pointer X to P(*X = P)
+  * Fake P->fd = X - 0x18
+  * Fake P->bk = X - 0x10
+  * Trigger Unlink(P), We have *X = X - 0x18
+  
 # Reference
 * http://www.freebuf.com/articles/system/151372.html
 * https://paper.seebug.org/255/#0-tsina-1-29759-397232819ff9a47a7b7e80a40613cfe1
