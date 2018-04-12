@@ -35,7 +35,7 @@ alarm:
 ```
 > * [DynElf(no libc need)](http://docs.pwntools.com/en/stable/dynelf.html?highlight=DynElf)<br>
 > * [mmap/mprotect](https://www.tuicool.com/articles/IfYZri3)<br>
-> * [Return to dl_resolve(no leak)](http://rk700.github.io/2015/08/09/return-to-dl-resolve)<br>
+> * [Return to dl_resolve(no leak need)](http://rk700.github.io/2015/08/09/return-to-dl-resolve)<br>
 > * [SROP(Sigreturn Oriented Programming)](https://blog.csdn.net/zsj2102/article/details/78561112)<br>
 >   * [pwntools.SROP](http://docs.pwntools.com/en/stable/rop/srop.html?highlight=SROP)<br>
 
