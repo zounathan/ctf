@@ -49,13 +49,35 @@ free(p1);
 ```
 
 # unlink
-Exploiting free on a corrupted chunk to get arbitrary write.<br>
-[free chunk](https://github.com/zounathtan/ctf/blob/master/tips/heap.md#free)
+Exploiting free on a corrupted chunk to get arbitrary write.
+* [free chunk](https://github.com/zounathtan/ctf/blob/master/tips/heap.md#free)
 ## unsafe unlink
 * [2014 HITCON CTF stkof](https://blog.csdn.net/qq_33528164/article/details/79586902)
 ## safe unlink
 * [2015 0ctf freenote](https://kitctf.de/writeups/0ctf2015/freenote)
 
 # off-by-one
+* [off-by-one](https://en.wikipedia.org/wiki/Off-by-one_error)
+* [off-by-one types](https://www.anquanke.com/post/id/84752)
+  * chunk overlapping
+    * off-by-one overwrite allocated
+    * off-by-one overwrite freed
+    * off-by-one null byte
+  * unlink
+    * off-by-one small bin
+    * off-by-one large bin<br>
+To exploit the off-by-one vulnerability, the chunk size must be `size+0x4(x64 size+0x8)`. Otherwise, the one byte can't rewrite the next chunk's size(inuse)
+* [PlaidCTF 2015-plaiddb](http://blog.frizn.fr/pctf-2015/pwn-550-plaiddb)
 
 # unsorted bin attack 
+Exploiting the overwrite of a freed chunk on unsorted bin freelist to write a large value into arbitrary address.<br>
+If the fd of bck is controlled, we can make `*(bck->fd)+0x10=unsorted_chunks(av)`.
+```c
+/* remove from unsorted list */
+unsorted_chunks (av)->bk = bck;
+bck->fd = unsorted_chunks (av);
+```
+* [0ctf 2016-zerostorage](http://brieflyx.me/2016/ctf-writeups/0ctf-2016-zerostorage/)
+
+# house of series
+* [house of series](https://paper.seebug.org/521/)
