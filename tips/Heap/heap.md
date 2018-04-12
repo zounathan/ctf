@@ -120,15 +120,15 @@ A chunk found inside a heap segment can be one of the below types:
 
 ## Allocated chunk
 ```
-chunk-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  chunk-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
       |   pre_size    |   size  |N|M|P|
-      mem-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      mem-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
       |   User data starts here...    .
       .                               .
       . (malloc_usable_size() bytes)  .
       .                               |
-nextchunk-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-      |             Size of chunk     |
+  nextchunk-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |   pre_size    |   size  |N|M|P|
       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ```
 * prev_size<br>
@@ -141,15 +141,15 @@ This field contains the size of this allocated chunk. Last 3 bits of this field 
 
 ## Free chunk
 ```
-chunk-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+  chunk-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
       |   pre_size    |   size  |N|M|P|
-      mem-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      mem-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
       |      fd       |       bk      |
       .-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
       .                               .
       .                               |
-nextchunk-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-      |             Size of chunk     |
+  nextchunk-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |   pre_size    |   size  |N|M|P|
       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ```
 * prev_size<br>
@@ -163,6 +163,8 @@ Backward pointer – Points to previous chunk in the same bin (and NOT to the pr
 
 ## Top chunk
 Chunk which is at the top border of an arena is called top chunk. It doesn't belong to any bin. Top chunk is used to service user request when there is NO free blocks, in any of the bins.<br>
+* Top chunk's size has to be page aligned
+* Top chunk's prev_inuse bit has to be set.
 * If top chunk size is greater than user requested size top chunk is split into two:
   * User chunk (of user requested size)
   * Remainder chunk (of remaining size), The remainder chunk becomes the new top. <br>
