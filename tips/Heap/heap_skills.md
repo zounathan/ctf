@@ -150,7 +150,7 @@ int main (void) {
  return(0); /* Bye */
 }
 ```
-![](https://docs.google.com/drawings/d/1--VLWTMBoF1RMNTchYu5EFScxGBSw1MovyOi656tgow/pub?w=721&h=834)
+![](https://docs.google.com/drawings/d/1--VLWTMBoF1RMNTchYu5EFScxGBSw1MovyOi656tgow/pub?w=721&h=834)<br>
 glibc malloc does the following, when `free(ptr2)` of vulnerable program gets executed
 * Arena for the chunk that is getting freed is retrieved by invoking `arena_for_chunk` macro.
 ```c
@@ -186,7 +186,7 @@ if (__glibc_unlikely (fwd->bk != bck))
           goto errout;
         }
 ```  
-* [bypass the corrupted chunks](https://gbmaster.wordpress.com/2015/06/15/x86-exploitation-101-house-of-mind-undead-and-loving-it/)
+* [bypass the corrupted chunks](https://gbmaster.wordpress.com/2015/06/15/x86-exploitation-101-house-of-mind-undead-and-loving-it/)<br>
 Fake Arena is constructed in such a way that `fastbin list fd` contains the address of `GOT entry of function`.
 ```c
 set_fastchunks(av);
