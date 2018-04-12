@@ -66,6 +66,7 @@ Exploiting free on a corrupted chunk to get arbitrary write.
   * unlink
     * off-by-one small bin
     * off-by-one large bin<br>
+    
 To exploit the off-by-one vulnerability, the chunk size must be `size+0x4(x64 size+0x8)`. Otherwise, the one byte can't rewrite the next chunk's size(inuse)
 * [PlaidCTF 2015-plaiddb](http://blog.frizn.fr/pctf-2015/pwn-550-plaiddb)
 
