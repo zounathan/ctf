@@ -112,7 +112,28 @@ bck->fd = unsorted_chunks (av);
 # house of series
 * [house of series](https://paper.seebug.org/521/)
 ## house of prime
+* [house of prime](https://gbmaster.wordpress.com/2014/08/24/x86-exploitation-101-this-is-the-first-witchy-house/)
+1. free a chunk with size of 8 bytes to rewrite `max_fast` in arena
+```c
+/* offset 2 to use otherwise unindexable first 2 bins */
+#define fastbin_index(sz)        ((((unsigned int)(sz)) >> 3) - 2)
 
+set_fastchunks(av);
+fb = &(av->fastbins[fastbin_index(size)]);
+/* Another simple check: make sure the top of the bin is not the record we are going to add (i.e., double free).  */
+if (__builtin_expect (*fb == p, 0)){
+  errstr = "double free or corruption (fasttop)";
+  goto errout;
+}
+p->fd = *fb;
+*fb = p;
+```
+2. free chunk to overwrite `arena_key`. (the index must make fastbins[index] pointing to arena_key.)  As the arena_key is set to a value different from zero, the `arena_get` macro won’t try to create a new arena.
+3. malloc
+    1. the requested size is smaller than av->max_fast
+    2. the requested size is bigger than av->max_fast<br>
+    
+As the base of this kind of exploit is the `ability to free chunks that are 8 bytes long`, then this whole thing is not working anymore since glibc 2.4.
 ## house of mind
 * [house of mind](https://sploitfun.wordpress.com/2015/03/04/heap-overflow-using-malloc-maleficarum/)
 1. tricks ‘glibc malloc’ to use a fake arena
@@ -191,16 +212,14 @@ if (__glibc_unlikely (fwd->bk != bck))
 Fake Arena is constructed in such a way that `fastbin list fd` contains the address of `GOT entry of function`.
 ```c
 set_fastchunks(av);
-  fb = &(av->fastbins[fastbin_index(size)]);
-  /* Another simple check: make sure the top of the bin is not the
-     record we are going to add (i.e., double free).  */
-  if (__builtin_expect (*fb == p, 0))
-    {
-      errstr = "double free or corruption (fasttop)";
-      goto errout;
-    }
-  p->fd = *fb;
-  *fb = p;
+fb = &(av->fastbins[fastbin_index(size)]);
+/* Another simple check: make sure the top of the bin is not the record we are going to add (i.e., double free).  */
+if (__builtin_expect (*fb == p, 0)){
+  errstr = "double free or corruption (fasttop)";
+  goto errout;
+}
+p->fd = *fb;
+*fb = p;
 ```
 ## house of spirit
 1. construct a fake fastbin chunk
