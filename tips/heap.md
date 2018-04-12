@@ -281,12 +281,8 @@ If p=malloc(100)
    2. put merged chunk into unsorted bin
 
 # Reference
-> * http://www.freebuf.com/articles/system/151372.html
-> * https://paper.seebug.org/255/#0-tsina-1-29759-397232819ff9a47a7b7e80a40613cfe1
-> * https://www.cnblogs.com/alisecurity/p/5486458.html
-> * https://www.cnblogs.com/alisecurity/p/5520847.html
-> * https://sploitfun.wordpress.com/2015/02/10/understanding-glibc-malloc/comment-page-1/
-
-https://paper.seebug.org/521/
-https://www.slideshare.net/AngelBoy1/play-with-file-structure-yet-another-binary-exploit-technique
-https://blog.csdn.net/qq_35519254/article/details/78627056
+* http://www.freebuf.com/articles/system/151372.html
+* https://paper.seebug.org/255/#0-tsina-1-29759-397232819ff9a47a7b7e80a40613cfe1
+* https://www.cnblogs.com/alisecurity/p/5486458.html
+* https://www.cnblogs.com/alisecurity/p/5520847.html
+* https://sploitfun.wordpress.com/2015/02/10/understanding-glibc-malloc/comment-page-1/
