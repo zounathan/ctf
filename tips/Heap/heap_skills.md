@@ -267,7 +267,7 @@ The same as house of mind, house of lore technique doesn't work.([house of mind]
       
 ## house of orange
 [top chunk size is lesser than user requested size](./heap.md#Top chunk)
-* [2016 HITCON house of orange]()
+* [2016 HITCON house of orange](https://blog.csdn.net/qq_35519254/article/details/78627056)
 
 # FSOP
 * [Advanced Heap Exploitation: File Stream Oriented Programming](https://dangokyo.me/2018/01/01/advanced-heap-exploitation-file-stream-oriented-programming/)
@@ -321,7 +321,7 @@ struct _IO_FILE {
 2. put chunk in small bin[4](size 0x60), or small bin[9](size 0xb0)
 3. construct fake vtable->_IO_overflow
 4. malloc
-* [2016 HITCON house of orange]()<br>
+* [2016 HITCON house of orange](https://blog.csdn.net/qq_35519254/article/details/78627056)<br>
 
 after libc-2.24, vtable check is added. we can't directly construct fake vtable in heap. Instead, we can use `_IO_str_jumps` and `_IO_wstr_jumps` as vtable.
 * [2018 0ctf babyheap](/writeups/2018-0ctf/babyheap)
