@@ -113,7 +113,7 @@ bck->fd = unsorted_chunks (av);
 * [house of series](https://paper.seebug.org/521/)
 ## house of prime
 * [house of prime](https://gbmaster.wordpress.com/2014/08/24/x86-exploitation-101-this-is-the-first-witchy-house/)
-1. free a chunk with size of 8 bytes to rewrite `max_fast` in arena
+1. free chunk A with size of 8 bytes to rewrite `max_fast` in arena
 ```c
 /* offset 2 to use otherwise unindexable first 2 bins */
 #define fastbin_index(sz)        ((((unsigned int)(sz)) >> 3) - 2)
@@ -128,11 +128,82 @@ if (__builtin_expect (*fb == p, 0)){
 p->fd = *fb;
 *fb = p;
 ```
-2. free chunk to overwrite `arena_key`. (the index must make fastbins[index] pointing to arena_key.)  As the arena_key is set to a value different from zero, the `arena_get` macro won’t try to create a new arena.
+2. free chunk B to overwrite `arena_key`. (the index must make fastbins[index] pointing to arena_key.)  
+    1. `fb` will be set to `arena_key`
+    2. `fd` pointer of the chunk B will be set to the `address of the existing arena` 
+    3. `arena_key(fb)` will be set to the `address of the chunk B`.
 3. malloc
-    1. the requested size is smaller than av->max_fast
-    2. the requested size is bigger than av->max_fast<br>
-    
+* The `arena_get()` macro is to find the current arena by retrieving the `arena_key` thread specific data, or failing this(arena_key=0), creating a new arena. 
+* set `ar_ptr` to the new value of arena_key, the address of `chunk B(fake arena)`. and it's passed to the function _int_malloc() along with the requested allocation size.
+```c
+Void_t*
+public_mALLOc(size_t bytes)
+{
+    mstate ar_ptr;
+    Void_t *victim;
+    ...
+    arena_get(ar_ptr, bytes);
+    if(!ar_ptr)
+      return 0;
+    victim = _int_malloc(ar_ptr, bytes);
+    ...
+    return victim;
+}
+```
+* the requested size is smaller than av->max_fast(B->size)
+  * By setting up a fake fastbin entry at av->fastbins[fastbin_index(nb)] it is possible to get malloc to return a nearly-arbitrary pointer.
+  * Specifically, the size of the victim chunk must have the same fastbin_index() as nb.
+```c
+Void_t*
+_int_malloc(mstate av, size_t bytes)
+{
+    INTERNAL_SIZE_T nb;               /* normalized request size */
+    unsigned int    idx;              /* associated bin index */
+    mfastbinptr*    fb;               /* associated fastbin */
+    mchunkptr       victim;           /* inspected/selected chunk */
+
+    checked_request2size(bytes, nb);
+
+    if ((unsigned long)(nb) <= (unsigned long)(av->max_fast)) {
+      long int idx = fastbin_index(nb);
+      fb = &(av->fastbins[idx]);
+      if ( (victim = *fb) != 0) {
+        if (fastbin_index (chunksize (victim)) != idx)
+          malloc_printerr (check_action, "malloc(): memory corruption (fast)", chunk2mem (victim));
+        *fb = victim->fd;
+        check_remalloced_chunk(av, victim, nb);
+        return chunk2mem(victim);
+      }
+    }
+```
+* the requested size is bigger than av->max_fast(B->size)
+  * victim can be set to an arbitrary address by creating a fake av->bins[0](ptr1) value. 
+    * `victim=ptr1->bk=ptr2`
+    * `bck=victim->bk=ptr2->bk`
+  * set bck to the address of a GOT-8. This will redirect execution to ptr1, which can safely contain a near jmp to skip past the crafted value at ptr1+0xc.
+    * bck->fd = unsorted_chunks(av) => GOT=ptr1(GOT hijack)
+    * unsorted_chunks(av)->bk = bck => ptr1+0xc=GOT-8
+```c
+for(;;) {
+      while ( (victim = unsorted_chunks(av)->bk) != unsorted_chunks(av)) {
+        bck = victim->bk;
+        if (__builtin_expect (victim->size <= 2 * SIZE_SZ, 0) || __builtin_expect (victim->size > av->system_mem, 0))
+          malloc_printerr (check_action, "malloc(): memory corruption", chunk2mem (victim));
+        size = chunksize(victim);
+        if (in_smallbin_range(nb) &&
+            bck == unsorted_chunks(av) &&
+            victim == av->last_remainder &&
+            (unsigned long)(size) > (unsigned long)(nb + MINSIZE)) {
+          ...
+        }
+        unsorted_chunks(av)->bk = bck;
+        bck->fd = unsorted_chunks(av);
+        if (size == nb) {
+          ...
+          return chunk2mem(victim);
+        }
+        ...
+```        
 As the base of this kind of exploit is the `ability to free chunks that are 8 bytes long`, then this whole thing is not working anymore since glibc 2.4.
 ## house of mind
 * [house of mind](https://sploitfun.wordpress.com/2015/03/04/heap-overflow-using-malloc-maleficarum/)
