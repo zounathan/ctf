@@ -32,7 +32,7 @@ Using ROP(Return-oriented programming)
 * Stack Pivot<br>
 * GOT hijack<br>
   * With randomization protection, the GOT can be changed to the code address in that function.<br
-  * [0ctf-blackhole](https://kileak.github.io/ctf/2018/0ctf-qual-blackhole/)<br>
+  * [2018 0ctf blackhole](https://kileak.github.io/ctf/2018/0ctf-qual-blackhole/)<br>
   * Since the last 3 nibbles of an address won’t be randomized by ASLR, we can overwrite the LSB of alarm got with `0x85` to change it into a neat syscall gadget.<br>
 ```code
 alarm:
