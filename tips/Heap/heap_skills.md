@@ -177,7 +177,7 @@ _int_malloc(mstate av, size_t bytes)
     }
 ```
 * the requested size is bigger than av->max_fast(B->size)
-  * victim can be set to an arbitrary address by creating a fake av->bins[0](ptr1) value. 
+  * victim can be set to an arbitrary address by creating a fake av->bins[0] (ptr1) value. 
     * `victim=ptr1->bk=ptr2`
     * `bck=victim->bk=ptr2->bk`
   * set bck to the address of a GOT-8. This will redirect execution to ptr1, which can safely contain a near jmp to skip past the crafted value at ptr1+0xc.
