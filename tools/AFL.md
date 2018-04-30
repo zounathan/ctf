@@ -22,3 +22,10 @@ afl-fuzz -i afl_in -o afl_out ./elf_to_fuzz -a @@
 ```
 # WIN AFL
 [Download](https://github.com/ivanfratric/winafl)
+
+# AFL Unicorn
+[Download](https://github.com/tigerpulma/Afl_unicorn)
+
+# AFL QEMU
+
+# AFL Network
