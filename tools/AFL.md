@@ -51,23 +51,33 @@ Instead of instrumenting the code at compilation time, WinAFL relies on dynamic 
         ```
         You should see the output corresponding to your target function being run 10 times after which the target executable will exit. A .log file should be created in the current directory. The log file contains useful information such as the files and modules loaded by the target as well as the dump of AFL coverage map. In the log you should see pre_fuzz_handler and post_fuzz_handler being run exactly 10 times as well as your input file being open in each iteration. Note the list of loaded modules for setting the -coverage_module flag. Note that you must use the same values for module names as seen in the log file (not case sensitive).
     * Now you should be ready to fuzz the target. First, make sure that both afl-fuzz.exe and winafl.dll are in the current directory. As stated earlier, the command line for afl-fuzz on Windows is:
-    ```
-    afl-fuzz [afl options] -- [instrumentation options] -- target_cmd_line
-    ```
-    The following afl-fuzz options are supported. Refer to the original AFL documentation for more info on these flags.
-    ```
-    -i dir        - input directory with test cases
-    -o dir        - output directory for fuzzer findings
-    -D dir        - directory containing DynamoRIO binaries (drrun, drconfig)
-    -t msec       - timeout for each run
-    -f file       - location read by the fuzzed program
-    -M \\ -S id   - distributed mode
-    -x dir        - optional fuzzer dictionary
-    -m limit      - memory limit for the target process
-    ```
+        ```
+        afl-fuzz [afl options] -- [instrumentation options] -- target_cmd_line
+        ```
+        The following afl-fuzz options are supported. Refer to the original AFL documentation for more info on these flags.
+        ```
+        -i dir        - input directory with test cases
+        -o dir        - output directory for fuzzer findings
+        -D dir        - directory containing DynamoRIO binaries (drrun, drconfig)
+        -t msec       - timeout for each run
+        -f file       - location read by the fuzzed program
+        -M \\ -S id   - distributed mode
+        -x dir        - optional fuzzer dictionary
+        -m limit      - memory limit for the target process
+        ```
 
 # AFL Unicorn
 [Download](https://github.com/tigerpulma/Afl_unicorn)
+[Unicorn-The ultimate CPU emulator](http://www.unicorn-engine.org/)
+* build and add in the Unicorn Mode 
+    ```
+    $ ./build_unicorn_support.sh
+    ```
+* dump the memory, create the python file to init the target program
+* fuzz with the commandline
+    ```
+    $ afl-fuzz -U -m none -i /path/to/inputs -o /path/to/results -- python temp.py ./test_harness @@
+    ```
 
 # AFL QEMU
 
