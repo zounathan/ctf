@@ -41,7 +41,16 @@ Instead of instrumenting the code at compilation time, WinAFL relies on dynamic 
         cmake --build . --config Release
         ```
 * Use WinAFL<br>
-    Command line to exctue AFL
+    * Make sure your target is running correctly without instrumentations.
+    * Locate the function you want to fuzz. Note the offset of the function from the start of the module. 
+    * Make sure that the target is running correctly under DynamoRIO. For this purpose you can use the standalone debug mode of WinAFL client which does not require connecting to afl-fuzz. Make sure you use the drrun.exe and winafl.dll version which corresponds to your target (32 vs. 64 bit).
+        ```
+        path\to\DynamoRIO\bin64\drrun.exe -c winafl.dll -debug
+        -target_module test_gdiplus.exe -target_offset 0x1270 -fuzz_iterations 10
+        -nargs 2 -- test_gdiplus.exe input.bmp
+        ```
+        You should see the output corresponding to your target function being run 10 times after which the target executable will exit. A .log file should be created in the current directory. The log file contains useful information such as the files and modules loaded by the target as well as the dump of AFL coverage map. In the log you should see pre_fuzz_handler and post_fuzz_handler being run exactly 10 times as well as your input file being open in each iteration. Note the list of loaded modules for setting the -coverage_module flag. Note that you must use the same values for module names as seen in the log file (not case sensitive).
+    * Now you should be ready to fuzz the target. First, make sure that both afl-fuzz.exe and winafl.dll are in the current directory. As stated earlier, the command line for afl-fuzz on Windows is:
     ```
     afl-fuzz [afl options] -- [instrumentation options] -- target_cmd_line
     ```
