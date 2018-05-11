@@ -79,7 +79,10 @@ Instead of instrumenting the code at compilation time, WinAFL relies on dynamic 
     $ afl-fuzz -U -m none -i /path/to/inputs -o /path/to/results -- python temp.py ./test_harness @@
     ```
 
-# AFL QEMU
-
 # AFL Network
 [Download](https://github.com/nnamon/afl-network-harness)
+
+# TriforceAFL
+Run AFL on linux kernel<br>
+[TriforceAFL](https://github.com/nccgroup/TriforceAFL)<br>
+[TriforceLinuxSyscallFuzzer](https://github.com/nccgroup/TriforceLinuxSyscallFuzzer/blob/master/runFuzz)
