@@ -411,7 +411,7 @@ struct _IO_jump_t
 };
 ```
 ## _IO_list_all
-1. overwrite _IO_list_all with unsorted bin attack. Change the _IO_list_all to the unsorted bin (av)
+1. overwrite _IO_list_all with [unsorted bin attack](#unsorted-bin-attack). Change the _IO_list_all to the unsorted bin (av)
 2. put chunk in small bin[4](size 0x60), or small bin[9](size 0xb0)
 3. construct fake vtable->_IO_overflow to system("/bin/sh")
 4. malloc
@@ -492,9 +492,9 @@ void _IO_str_finish (_IO_FILE *fp, int dummy){
   _IO_default_finish (fp, 0);
 }
 ```
-* [2018 0ctf babyheap](/writeups/2018-0ctf/babyheap)
+* [2018 0ctf babyheap](/writeups/2018/0ctf/babyheap)
 ## _IO_buf_end
-1. overwrite _IO_buf_end with unsorted bin attack, change the end of stdin buf end to the unsorted bin (av). 
+1. overwrite _IO_buf_end with [unsorted bin attack](#unsorted-bin-attack), change the end of stdin buf end to the unsorted bin (av). 
 2. overwrite `_malloc_hook`(_malloc_hook is between stdin buf and main_arena)
 3. malloc()
 * [2017 HITCON ghost in heap](https://github.com/scwuaptx/CTF/tree/master/2017-writeup/hitcon/ghost_in_the_heap)
