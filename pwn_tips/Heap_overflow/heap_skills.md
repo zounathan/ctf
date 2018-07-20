@@ -101,7 +101,7 @@ To exploit the off-by-one vulnerability, the chunk size must be `size+0x4(x64 si
 
 # unsorted bin attack 
 Exploiting the overwrite of a freed chunk on unsorted bin freelist to write a large value into arbitrary address.<br>
-If the fd of bck is controlled, we can make `*(bck->fd)+0x10=unsorted_chunks(av)`.
+If the fd of bck(the bk of the unsorted bin) is controlled, we can make `*(bck->fd)+0x10=unsorted_chunks(av)`.
 ```c
 /* remove from unsorted list */
 unsorted_chunks (av)->bk = bck;
@@ -344,60 +344,157 @@ The same as house of mind, house of lore technique doesn't work.([house of mind]
 * [Advanced Heap Exploitation: File Stream Oriented Programming](https://dangokyo.me/2018/01/01/advanced-heap-exploitation-file-stream-oriented-programming/)
 * [play with file_structure](https://www.slideshare.net/AngelBoy1/play-with-file-structure-yet-another-binary-exploit-technique)
 ```c
-struct _IO_FILE {
-  int _flags;       /* High-order word is _IO_MAGIC; rest is flags. */
-#define _IO_file_flags _flags
- 
-  /* The following pointers correspond to the C++ streambuf protocol. */
-  /* Note:  Tk uses the _IO_read_ptr and _IO_read_end fields directly. */
-  char* _IO_read_ptr;   /* Current read pointer */
-  char* _IO_read_end;   /* End of get area. */
-  char* _IO_read_base;  /* Start of putback+get area. */
-  char* _IO_write_base; /* Start of put area. */
-  char* _IO_write_ptr;  /* Current put pointer. */
-  char* _IO_write_end;  /* End of put area. */
-  char* _IO_buf_base;   /* Start of reserve area. */
-  char* _IO_buf_end;    /* End of reserve area. */
-  /* The following fields are used to support backing up and undo. */
-  char *_IO_save_base; /* Pointer to start of non-current get area. */
-  char *_IO_backup_base;  /* Pointer to first valid character of backup area */
-  char *_IO_save_end; /* Pointer to end of non-current get area. */
- 
-  struct _IO_marker *_markers;
- 
-  struct _IO_FILE *_chain;
- 
-  int _fileno;
+_IO_FILE_plus {
+    _flags = 0xfbad2086, 
+    _IO_read_ptr = 0x0, 
+    _IO_read_end = 0x0, 
+    _IO_read_base = 0x0, 
+    _IO_write_base = 0x0, 
+    _IO_write_ptr = 0x0, 
+    _IO_write_end = 0x0, 
+    _IO_buf_base = 0x0, 
+    _IO_buf_end = 0x0, 
+    _IO_save_base = 0x0, 
+    _IO_backup_base = 0x0, 
+    _IO_save_end = 0x0, 
+    _markers = 0x0, 
+    _chain = 0x7ffff7b94620 <_IO_2_1_stdout_>, 
+    _fileno = 0x2, 
+    _flags2 = 0x0, 
+    _old_offset = 0xffffffffffffffff, 
+    _cur_column = 0x0, 
+    _vtable_offset = 0x0, 
+    _shortbuf = "", 
+    _lock = 0x7ffff7b95770 <_IO_stdfile_2_lock>, 
+    _offset = 0xffffffffffffffff, 
+    _codecvt = 0x0, 
+    _wide_data = 0x7ffff7b93660 <_IO_wide_data_2>, 
+    _freeres_list = 0x0, 
+    _freeres_buf = 0x0, 
+    __pad5 = 0x0, 
+    _mode = 0x0, 
+    _unused2 = '\000' <repeats 19 times>
+  }, 
+  vtable = 0x7ffff7b926e0 <_IO_file_jumps>
+}
+```
+the vtable
+```c
+struct _IO_jump_t
+{
+    JUMP_FIELD(size_t, __dummy);
+    JUMP_FIELD(size_t, __dummy2);
+    JUMP_FIELD(_IO_finish_t, __finish);
+    JUMP_FIELD(_IO_overflow_t, __overflow);
+    JUMP_FIELD(_IO_underflow_t, __underflow);
+    JUMP_FIELD(_IO_underflow_t, __uflow);
+    JUMP_FIELD(_IO_pbackfail_t, __pbackfail);
+    /* showmany */
+    JUMP_FIELD(_IO_xsputn_t, __xsputn);
+    JUMP_FIELD(_IO_xsgetn_t, __xsgetn);
+    JUMP_FIELD(_IO_seekoff_t, __seekoff);
+    JUMP_FIELD(_IO_seekpos_t, __seekpos);
+    JUMP_FIELD(_IO_setbuf_t, __setbuf);
+    JUMP_FIELD(_IO_sync_t, __sync);
+    JUMP_FIELD(_IO_doallocate_t, __doallocate);
+    JUMP_FIELD(_IO_read_t, __read);
+    JUMP_FIELD(_IO_write_t, __write);
+    JUMP_FIELD(_IO_seek_t, __seek);
+    JUMP_FIELD(_IO_close_t, __close);
+    JUMP_FIELD(_IO_stat_t, __stat);
+    JUMP_FIELD(_IO_showmanyc_t, __showmanyc);
+    JUMP_FIELD(_IO_imbue_t, __imbue);
 #if 0
-  int _blksize;
-#else
-  int _flags2;
+    get_column;
+    set_column;
 #endif
-  _IO_off_t _old_offset; /* This used to be _offset but it's too small.  */
- 
-#define __HAVE_COLUMN /* temporary */
-  /* 1+column number of pbase(); 0 is unknown. */
-  unsigned short _cur_column;
-  signed char _vtable_offset;
-  char _shortbuf[1];
- 
-  /*  char* _save_gptr;  char* _save_egptr; */
- 
-  _IO_lock_t *_lock;
-#ifdef _IO_USE_OLD_IO_FILE
 };
 ```
 ## _IO_list_all
-1. overwrite _IO_list_all with unsorted bin
+1. overwrite _IO_list_all with unsorted bin attack. Change the _IO_list_all to the unsorted bin (av)
 2. put chunk in small bin[4](size 0x60), or small bin[9](size 0xb0)
-3. construct fake vtable->_IO_overflow
+3. construct fake vtable->_IO_overflow to system("/bin/sh")
 4. malloc
+when we call the malloc, the system will crash. The glibc will detect memory corruption. At this time, it will flush all the IO stream with function IO_flush_all_lockp.
+Because the _IO_list_all is overwritted with unsorted bin (av), it will get the next fp from _IO_list_all->chain, which is the chunk in small bin[4].
+Construct the fake _IO_FILE_plus struct in that chunk to make `(fp->_mode <= 0 && fp->_IO_write_ptr > fp->_IO_write_base)` true. 
+So it will call `vtable->_IO_OVERFLOW(fp,EOF)`
+```c
+int _IO_flush_all_lockp (int do_lock){
+     int result = 0;
+     struct _IO_FILE *fp;
+     int last_stamp;
+   
+   #ifdef _IO_MTSAFE_IO
+     __libc_cleanup_region_start (do_lock, flush_cleanup, NULL);
+     if (do_lock) _IO_lock_lock (list_all_lock);
+   #endif
+  
+     last_stamp = _IO_list_all_stamp;
+     fp = (_IO_FILE *) _IO_list_all;
+     while (fp != NULL){
+         run_fp = fp;
+         if (do_lock) _IO_flockfile (fp);
+         if (((fp->_mode <= 0 && fp->_IO_write_ptr > fp->_IO_write_base)
+   #if defined _LIBC || defined _GLIBCPP_USE_WCHAR_T
+          || (_IO_vtable_offset (fp) == 0 && fp->_mode > 0 && (fp->_wide_data->_IO_write_ptr > fp->_wide_data->_IO_write_base))
+   #endif
+          )&& _IO_OVERFLOW (fp, EOF) == EOF)
+            result = EOF;
+  
+         if (do_lock) _IO_funlockfile (fp);
+         run_fp = NULL;
+   
+         if (last_stamp != _IO_list_all_stamp) {
+           /* Something was added to the list.  Start all over again.  */
+           fp = (_IO_FILE *) _IO_list_all;
+           last_stamp = _IO_list_all_stamp;
+         }else
+           fp = fp->_chain;
+}
+```       
 * [2016 HITCON house of orange](https://blog.csdn.net/qq_35519254/article/details/78627056)<br>
 
 after libc-2.24, vtable check is added. we can't directly construct fake vtable in heap. Instead, we can use `_IO_str_jumps` and `_IO_wstr_jumps` as vtable.
+the functions `_IO_str_overflow, _IO_str_finish, _IO_wstr_overflow, _IO_wstr_finish` can be used to call onegadget to get shell.
+
+function _IO_str_overflow will call `(*((_IO_strfile *) fp)->_s._allocate_buffer) (new_size)`.
+we can make the `*((_IO_strfile *) fp)->_s._allocate_buffer` to be onegadget.
+```c
+int _IO_str_overflow (_IO_FILE *fp, int c){
+  int flush_only = c == EOF;
+  _IO_size_t pos;
+  if (fp->_flags & _IO_NO_WRITES)
+      return flush_only ? 0 : EOF;
+  ...
+  pos = fp->_IO_write_ptr - fp->_IO_write_base;
+  if (pos >= (_IO_size_t) (_IO_blen (fp) + flush_only)){
+      if (fp->_flags & _IO_USER_BUF) /* not allowed to enlarge */
+        return EOF;
+      else{
+        char *new_buf;
+        char *old_buf = fp->_IO_buf_base;
+        size_t old_blen = _IO_blen (fp);
+        _IO_size_t new_size = 2 * old_blen + 100;
+        if (new_size < old_blen)
+          return EOF;
+        new_buf= (char *) (*((_IO_strfile *) fp)->_s._allocate_buffer) (new_size);
+        ...
+}
+```
+function _IO_str_finish will call `(((_IO_strfile *) fp)->_s._free_buffer) (fp->_IO_buf_base)`.
+we can make the `((_IO_strfile *) fp)->_s._free_buffer` to be onegadget.
+```c
+void _IO_str_finish (_IO_FILE *fp, int dummy){
+  if (fp->_IO_buf_base && !(fp->_flags & _IO_USER_BUF))
+    (((_IO_strfile *) fp)->_s._free_buffer) (fp->_IO_buf_base);
+  fp->_IO_buf_base = NULL;
+  _IO_default_finish (fp, 0);
+}
+```
 * [2018 0ctf babyheap](/writeups/2018-0ctf/babyheap)
 ## _IO_buf_end
-1. overwrite _IO_buf_end, change the end of stdin buf end.
+1. overwrite _IO_buf_end with unsorted bin attack, change the end of stdin buf end to the unsorted bin (av). 
 2. overwrite `_malloc_hook`(_malloc_hook is between stdin buf and main_arena)
 3. malloc()
 * [2017 HITCON ghost in heap](https://github.com/scwuaptx/CTF/tree/master/2017-writeup/hitcon/ghost_in_the_heap)
