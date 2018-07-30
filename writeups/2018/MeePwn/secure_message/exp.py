@@ -1,7 +1,7 @@
 from pwn import *
 
 elf = ELF('./secure_message')
-p = process(elf.path, env={'LD_PRELOAD': '/home/nathan/glibc/2-27/build/libc.so'})
+p = process(elf.path)
 print proc.pidof(p)[0]
 
 def register(name, passwd, desc):
