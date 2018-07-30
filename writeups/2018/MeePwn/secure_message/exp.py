@@ -1,4 +1,4 @@
-'''python
+'''
 from pwn import *
 
 elf = ELF('./secure_message')
