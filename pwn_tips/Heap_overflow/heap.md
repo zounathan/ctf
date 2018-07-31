@@ -234,7 +234,10 @@ Chunks of size `greater than equal to 512` is called a large chunk. Bins holding
 * `Coalescing` – Two chunks which are free cant be adjacent to each other, it gets combined into single free chunk.
 * malloc(large chunk) –
   * Initially all large bins would be NULL and hence eventhough user requested a large chunk, instead of large bin code, next largest bin code tries to service it.
-  * Also during the first call to malloc, small bin and large bin datastructures (bins) found in malloc_state is initialized ie) bins would point to itself signifying they are empty.
+  * Also during the first call to malloc, small bin and large bin datastructures (bins) found in malloc_state is initialized ie) bins would `point to itself` signifying they are empty.
+  ```c
+  victim->fd_nextsize = victim->bk_nextsize = victim;
+  ```
   * Later when large bin is non empty, if the largest chunk size (in its binlist) is greater than user requested size, binlist is walked from rear end to front end, to find a suitable chunk whose size is near/equal to user requested size. Once found, that chunk is split into two chunks
     * User chunk (of user requested size) – returned to user.
     * Remainder chunk (of remaining size) – added to unsorted bin.
