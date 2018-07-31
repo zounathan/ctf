@@ -145,6 +145,8 @@ This field contains the size of this allocated chunk. Last 3 bits of this field 
       |   pre_size    |   size  |N|M|P|
       mem-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
       |      fd       |       bk      |
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      |  fd_nextsize  |  bk_nextsize  |
       .-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
       .                               .
       .                               |
