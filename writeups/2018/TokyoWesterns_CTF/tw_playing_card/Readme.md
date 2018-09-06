@@ -50,7 +50,7 @@ Recovering the `qword_6152C8` to `unk_4113A0`, we can finally get the correct fl
 2. key: the 5 cards
 3. algorithm: xxtea
 
-
+TWCTF{D!d_y0u_s33_7he_n!m_b!nary:)}
 
 
 
