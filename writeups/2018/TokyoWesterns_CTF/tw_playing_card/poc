@@ -1,0 +1,35 @@
+b *0x401171
+ignore 1 5
+r
+b *0x40118b
+set $rax=0
+c
+set $rax=1
+c
+set $rax=2
+c
+set $rax=10
+c
+set $rax=0
+c
+set $rax=5
+c
+set $rax=2
+c
+set $rax=3
+c
+set $rax=3
+c
+set $rax=8
+b *0x401ec6
+c
+set *(long long*)((*(long long*)0x6152c8)+16)=(*(long long*)((*(long long*)0x6152c8)+16))^0x2020202020202020
+set *(long long*)((*(long long*)0x6152c8)+24)=(*(long long*)((*(long long*)0x6152c8)+24))^0x2020202020202020
+set *(long long*)((*(long long*)0x6152c8)+32)=(*(long long*)((*(long long*)0x6152c8)+32))^0x2020202020202020
+set *(long long*)((*(long long*)0x6152c8)+40)=(*(long long*)((*(long long*)0x6152c8)+40))^0x2020202020202020
+set *(long long*)((*(long long*)0x6152c8)+48)=(*(long long*)((*(long long*)0x6152c8)+48))^0x2020202020202020
+b *0x410adb
+c
+set $rcx=100
+set $rbx=0x28
+c
