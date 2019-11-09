@@ -143,69 +143,71 @@ Malloc largebin
 Insert largebin to the largebin list
 ```c
 ...//将largebin从unsorted bin中取下
-          unsorted_chunks (av)->bk = bck;
-          bck->fd = unsorted_chunks (av);
+  unsorted_chunks (av)->bk = bck;
+  bck->fd = unsorted_chunks (av);
 
-          ...
+  ...
 
+  else
+    {
+      victim_index = largebin_index (size);//第一步，获取当前要插入的chunk对应的index
+      bck = bin_at (av, victim_index); //当前index中最小的chunk
+      fwd = bck->fd;                   //当前index中最大的chunk
+
+      /* maintain large bins in sorted order */
+      if (fwd != bck)
+        { // 该chunk对应的largebin index中不为空
+          /* Or with inuse bit to speed comparisons */
+          size |= PREV_INUSE;
+          /* if smaller than smallest, bypass loop below */
+          assert ((bck->bk->size & NON_MAIN_ARENA) == 0);
+          if ((unsigned long) (size) < (unsigned long) (bck->bk->size)) //第三步，如果要插入的chunk的size小于当前index中最小chunk的大小，则直接插入到最后面。
+            {
+              fwd = bck;
+              bck = bck->bk;
+
+              victim->fd_nextsize = fwd->fd;
+              victim->bk_nextsize = fwd->fd->bk_nextsize;
+              fwd->fd->bk_nextsize = victim->bk_nextsize->fd_nextsize = victim;
+            }
           else
             {
-              victim_index = largebin_index (size);//第一步，获取当前要插入的chunk对应的index
-              bck = bin_at (av, victim_index); //当前index中最小的chunk
-              fwd = bck->fd;                   //当前index中最大的chunk
-
-              /* maintain large bins in sorted order */
-              if (fwd != bck)
-                { // 该chunk对应的largebin index中不为空
-                  /* Or with inuse bit to speed comparisons */
-                  size |= PREV_INUSE;
-                  /* if smaller than smallest, bypass loop below */
-                  assert ((bck->bk->size & NON_MAIN_ARENA) == 0);
-                  if ((unsigned long) (size) < (unsigned long) (bck->bk->size)) //第三步，如果要插入的chunk的size小于当前index中最小chunk的大小，则直接插入到最后面。
-                    {
-                      fwd = bck;
-                      bck = bck->bk;
-
-                      victim->fd_nextsize = fwd->fd;
-                      victim->bk_nextsize = fwd->fd->bk_nextsize;
-                      fwd->fd->bk_nextsize = victim->bk_nextsize->fd_nextsize = victim;
-                    }
-                  else
-                    {
-                      assert ((fwd->size & NON_MAIN_ARENA) == 0);
-                      while ((unsigned long) size < fwd->size) //第四步，如果插入的chunk不为最小，则通过`fd_nextsize`从大到小遍历chunk，找到小于等于要插入chunk的位置
-                        {
-                          fwd = fwd->fd_nextsize;
-                          assert ((fwd->size & NON_MAIN_ARENA) == 0);
-                        }
-
-                      if ((unsigned long) size == (unsigned long) fwd->size)
-                        /* Always insert in the second position.  */
-                        fwd = fwd->fd; //第五步，如果存在堆头，则插入到堆头的下一个节点
-                      else
-                        { //第六步，否则这个chunk将会成为堆头，`bk_nextsize`和`fd_nextsize`将被置位
-                          victim->fd_nextsize = fwd;
-                          victim->bk_nextsize = fwd->bk_nextsize;
-                          fwd->bk_nextsize = victim;
-                          victim->bk_nextsize->fd_nextsize = victim;
-                        }
-                      bck = fwd->bk;
-                    }
+              assert ((fwd->size & NON_MAIN_ARENA) == 0);
+              while ((unsigned long) size < fwd->size) //第四步，如果插入的chunk不为最小，则通过`fd_nextsize`从大到小遍历chunk，找到小于等于要插入chunk的位置
+                {
+                  fwd = fwd->fd_nextsize;
+                  assert ((fwd->size & NON_MAIN_ARENA) == 0);
                 }
-              else   //第二步，chunk对应的largebin index中为空
-                victim->fd_nextsize = victim->bk_nextsize = victim;
-            }
 
-          mark_bin (av, victim_index);
-          //设置fd与bk完成插入
-          victim->bk = bck; 
-          victim->fd = fwd;
-          fwd->bk = victim;
-          bck->fd = victim;
-          ...
+              if ((unsigned long) size == (unsigned long) fwd->size)
+                /* Always insert in the second position.  */
+                fwd = fwd->fd; //第五步，如果存在堆头，则插入到堆头的下一个节点
+              else
+                { //第六步，否则这个chunk将会成为堆头，`bk_nextsize`和`fd_nextsize`将被置位
+                  victim->fd_nextsize = fwd;
+                  victim->bk_nextsize = fwd->bk_nextsize;
+                  fwd->bk_nextsize = victim;
+                  victim->bk_nextsize->fd_nextsize = victim;
+                }
+              bck = fwd->bk;
+            }
         }
+      else   //第二步，chunk对应的largebin index中为空
+        victim->fd_nextsize = victim->bk_nextsize = victim;
+    }
+
+  mark_bin (av, victim_index);
+  //设置fd与bk完成插入
+  victim->bk = bck; 
+  victim->fd = fwd;
+  fwd->bk = victim;
+  bck->fd = victim;
+  ...
+  }
 ``` 
-* 
+Rewrite the fwd's bk and bk_nextsize.
+* `victim->bk_nextsize = fwd->bk_nextsize;` and `victim->bk_nextsize->fd_nextsize = victim;` can write the victim address to arbitrarily address.
+* `bck = fwd->bk;` and `bck->fd = victim;` can write the victim address to arbitrarily address.
 
 # unsorted bin attack 
 Exploiting the overwrite of a freed chunk on unsorted bin freelist to write a unsortedbin freelist address into arbitrary address.<br>
