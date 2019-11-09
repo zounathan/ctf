@@ -6,7 +6,8 @@ Here are some methods to control flow
 * GOT hijack
 * fake vtable (FOSP File Stream Oriented Programming)
 
-# fastbin attack
+# Fastbin Tricks
+## fastbin attack
 1. allocte two fastbin
 2. free one chunk A
 3. heap overflow rewrite the chunk A's fd with `ptr`
@@ -24,7 +25,7 @@ if (__builtin_expect (fastbin_index (chunksize (victim)) != idx, 0))
 ```
 * [2017 0ctf babyheap](https://blog.csdn.net/qq_29343201/article/details/66476135)
 
-# fastbin duplication
+## fastbin duplication
 * If we double free the fastchunk that at the top of fastbin list, the program will crash.
 * we can double free the fastchunk, if it's not at the top of fastbin list. Then, the chunk put into the fastbin again.
 ```c
@@ -52,6 +53,22 @@ void* p3 = malloc(0x400);
 /* p1 is in unsorted bin and fast bin */
 free(p1);
 ```
+
+# Tcache Tricks
+## tcache poisoning
+* Similar with the fastbin attack. Rewrite the next(fd) of the chunk. 
+* Don't need construct fake chunk.
+* Don't check the chunk size.
+
+## tcache duplication
+* Similar with the fastbin duplication. Double free bin.
+* Don't check whether the chunk to be freed at top of the list.
+
+## tcache perthread corruption
+* Control the `tcache_perthread_struct`. Rewrite the `tcache_entry` in the struct.
+
+## tcache house of spirit
+Similar with house of spirit.
 
 # unlink
 Exploiting free on a corrupted chunk to get arbitrary write.
