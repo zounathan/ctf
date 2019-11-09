@@ -227,19 +227,19 @@ Chunks of size `greater than equal to 512` is called a large chunk. Bins holding
      2. The chunks with the same size are linked by the fd/bk. Except for the top one, the fd_nextsize/bk_nextsize are setted to be 0.
      3. The chunks with different size are lined by fd_nextsize/bk_nextsize. Only the top one of every size chunk is linked.
      ```
-	  <----------------------------------------------------------------------<
-	  |	fd_nextsize				   							   |
-	  |	>-------------------------------> >-------------------------------> |
-	  |	| fd_nextsize                   | | fd_nextsize                   | |
+	  <---------------------------------------------------------------------<
+	  | fd_nextsize                                                         |
+	  | >-------------------------------> >-------------------------------> |
+	  | | fd_nextsize                   | | fd_nextsize                   | |
      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
      |      A        |      B      | |      C        |      D      | |      E        |      F      | 
      |    fd->       |    fd->     | |    fd->       |    fd->     | |    fd->       |    fd->     | 
      |    bk<-       |    bk<-     | |    bk<-       |    bk<-     | |    bk<-       |    bk<-     | 
      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ 
-	  |	| bk_nextsize			       | |bk_nextsize                    | |
-	  |	<-------------------------------< <-------------------------------< |
-       |	bk_nextsize											   |
-       >---------------------------------------------------------------------->
+          | | bk_nextsize                   | |bk_nextsize                    | |
+          | <-------------------------------< <-------------------------------< |
+          | bk_nextsize                                                         |
+          >--------------------------------------------------------------------->
      ```
 * 63 large bins in total
   * Out of these 63 bins:
