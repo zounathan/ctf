@@ -305,7 +305,7 @@ assert(P->fd->bk == P) assert(P->bk->fd == P)
   * Fake P->bk = X - 0x10
   * Trigger Unlink(P), We have *X = X - 0x18
 
-# Consolidation
+# Malloc_Consolidate
 1. malloc large bin
 2. Free the small bin, if the next chunk is the top chunk.
 
