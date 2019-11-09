@@ -304,7 +304,11 @@ assert(P->fd->bk == P) assert(P->bk->fd == P)
   * Fake P->fd = X - 0x18
   * Fake P->bk = X - 0x10
   * Trigger Unlink(P), We have *X = X - 0x18
-  
+
+# Consolidation
+1. malloc large bin
+2. Free the small bin, if the next chunk is the top chunk.
+
 # Reference
 * https://blog.csdn.net/zdy0_2004/article/details/51485198
 * https://sploitfun.wordpress.com/2015/02/10/understanding-glibc-malloc/comment-page-1/
