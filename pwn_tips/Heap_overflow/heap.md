@@ -347,7 +347,7 @@ typedef struct tcache_perthread_struct
   tcache_entry *entries[TCACHE_MAX_BINS];
 } tcache_perthread_struct;
 ```
-Tcache is also a chunk in the heap, which size is `size_chunkhead + size_counts + size_entries = 16 + 64 + 64*8 = 592 = 0x250` in amd64.
+Tcache(tcache_perthread_struct) is also a chunk in the heap, which size is `size_chunkhead + size_counts + size_entries = 16 + 64 + 64*8 = 592 = 0x250` in amd64.
 
 * The fd of the chunk in tcache list points to the n`ext chunk's fd address`, instead of the presize address.
 * Unlike the fastbin, chunk mallocced from tcache don't check the size.
