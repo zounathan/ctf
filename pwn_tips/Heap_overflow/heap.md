@@ -331,6 +331,7 @@ assert(P->fd->bk == P) assert(P->bk->fd == P)
 # Tcache
 After the glibc-2.26, Tcache(Thread Local Caching) is introduced.
 * If the chunk size if less than `0x410`, it will be put in tcache list when it's freeed.
+* First in Last out.
 * Tcache has 64 single linked lists for different size chunks. Every list can have 7 chunks at most. 
 ```c
 # define TCACHE_MAX_BINS		64
