@@ -329,8 +329,49 @@ assert(P->fd->bk == P) assert(P->bk->fd == P)
 2. Free the small bin, if the next chunk is the top chunk.
 
 # Tcache
-After the glibc-2.26, Tcache is introduced.
+After the glibc-2.26, Tcache(Thread Local Caching) is introduced.
+* If the chunk size if less than `0x410`, it will be put in tcache list when it's freeed.
+* Tcache has 64 single linked lists for different size chunks. Every list can have 7 chunks at most. 
+```c
+# define TCACHE_MAX_BINS		64
+/* We overlay this structure on the user-data portion of a chunk when the chunk is stored in the per-thread cache.  */
+typedef struct tcache_entry
+{
+  struct tcache_entry *next;
+} tcache_entry;
 
+/* There is one of these for each thread, which contains the per-thread cache (hence "tcache_perthread_struct").  Keeping overall size low is mildly important.  Note that COUNTS and ENTRIES are redundant (we could have just counted the linked list each time), this is for performance reasons.  */
+typedef struct tcache_perthread_struct
+{
+  char counts[TCACHE_MAX_BINS];
+  tcache_entry *entries[TCACHE_MAX_BINS];
+} tcache_perthread_struct;
+```
+Tcache is also a chunk in the heap, which size is `size_chunkhead + size_counts + size_entries = 16 + 64 + 64*8 = 592 = 0x250` in amd64.
+
+* The fd of the chunk in tcache list points to the n`ext chunk's fd address`, instead of the presize address.
+```
+static void
+tcache_put (mchunkptr chunk, size_t tc_idx)
+{
+  tcache_entry *e = (tcache_entry *) chunk2mem (chunk);
+  assert (tc_idx < TCACHE_MAX_BINS);
+  e->next = tcache->entries[tc_idx];
+  tcache->entries[tc_idx] = e;
+  ++(tcache->counts[tc_idx]);
+}
+
+static void *
+tcache_get (size_t tc_idx)
+{
+  tcache_entry *e = tcache->entries[tc_idx];
+  assert (tc_idx < TCACHE_MAX_BINS);
+  assert (tcache->entries[tc_idx] > 0);
+  tcache->entries[tc_idx] = e->next;
+  --(tcache->counts[tc_idx]);
+  return (void *) e;
+}
+```
 # Reference
 * https://blog.csdn.net/zdy0_2004/article/details/51485198
 * https://sploitfun.wordpress.com/2015/02/10/understanding-glibc-malloc/comment-page-1/
