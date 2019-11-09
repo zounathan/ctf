@@ -120,6 +120,9 @@ If the fd of bck(the bk of the unsorted bin) is controlled, we can make `*(bck->
 unsorted_chunks (av)->bk = bck;
 bck->fd = unsorted_chunks (av);
 ```
+Tricks
+1. Rewrite the `global_max_fast`, to change the max size of fastbin.
+2. Rewrite the `IO_file_list` when use the FSOP.
 * [2016 0ctf zerostorage](http://brieflyx.me/2016/ctf-writeups/0ctf-2016-zerostorage/)
 
 # house of series
