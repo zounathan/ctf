@@ -8,10 +8,12 @@ Here are some methods to control flow
 
 # fastbin attack
 1. allocte two fastbin
-2. heap overflow rewrite the fd
-3. fake chunk
-4. malloc
-* Don't check the alignment. We can construct fake chunk in any memorty position.
+2. free one chunk A
+3. heap overflow rewrite the chunk A's fd with `ptr`
+4. construct fake chunk with the same size ath position `ptr`
+5. malloc twice. Get the chunk at `ptr`
+* Don't check the alignment. We can construct fake chunk in any memory position.
+* Check the size(4 bytes) of the fake chunk.
 ```c
 #define fastbin_index(sz) \
   ((((unsigned int) (sz)) >> (SIZE_SZ == 8 ? 4 : 3)) - 2)
@@ -23,7 +25,7 @@ if (__builtin_expect (fastbin_index (chunksize (victim)) != idx, 0))
 * [2017 0ctf babyheap](https://blog.csdn.net/qq_29343201/article/details/66476135)
 
 # fastbin duplication
-* If we free the fastchunk that at the top of fastbin list, the program will crash.
+* If we double free the fastchunk that at the top of fastbin list, the program will crash.
 * we can double free the fastchunk, if it's not at the top of fastbin list. Then, the chunk put into the fastbin again.
 ```c
 int *a = malloc(8);
@@ -36,6 +38,9 @@ free(a);
 ```
 ## fastbin_dup_consolidate
 Tricking malloc into returning an already-allocated heap pointer by putting a pointer on both fastbin freelist and unsorted bin freelist.
+1. Free the fastbin to put the chunk in fastbin freelist.
+2. Trigger malloc_consolidate to put the chunk in unsorted bin freelist.
+3. Double free the fastbin to put the chunk in the fastbin freelist again.
 ```c
 void* p1 = malloc(0x40);
 void* p2 = malloc(0x40);
@@ -50,6 +55,14 @@ free(p1);
 
 # unlink
 Exploiting free on a corrupted chunk to get arbitrary write.
+```c
+#define unlink( P, BK, FD ) {
+BK = P->bk;
+FD = P->fd;
+FD->bk = BK;
+BK->fd = FD;
+}
+```
 * [free chunk](./heap.md#free)
 ## unsafe unlink
 * [2014 HITCON CTF stkof](https://blog.csdn.net/qq_33528164/article/details/79586902)
@@ -95,12 +108,12 @@ To exploit the off-by-one vulnerability, the chunk size must be `size+0x4(x64 si
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  ```
 1. contruct fake fd and bk in chunk A
-2. off-by-one rewrite pre_inuse=0, keep the size(B) unchanged. (or change size(B), and construct the chunk foot.)
+2. off-by-one rewrite pre_inuse=0, presize=size(A), keep the size(B) unchanged. (or change size(B), and construct the chunk foot.)
 2. free(B), unlink chunk A
 * [2015 PlaidCTF plaiddb](http://blog.frizn.fr/pctf-2015/pwn-550-plaiddb)
 
 # unsorted bin attack 
-Exploiting the overwrite of a freed chunk on unsorted bin freelist to write a large value into arbitrary address.<br>
+Exploiting the overwrite of a freed chunk on unsorted bin freelist to write a unsortedbin freelist address into arbitrary address.<br>
 If the fd of bck(the bk of the unsorted bin) is controlled, we can make `*(bck->fd)+0x10=unsorted_chunks(av)`.
 ```c
 /* remove from unsorted list */
