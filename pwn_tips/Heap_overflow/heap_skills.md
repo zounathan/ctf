@@ -138,7 +138,7 @@ Malloc largebin
 
 * Construct the fake chunk(size, fd/bk, fd_nextsize/bk_nextsize).
 * Rewrite the `bk_nextsize` to the fake chunk address.
-
+[2017 lctf 2ze4u](https://www.anquanke.com/post/id/183877)
 ## Rewrite arbitrarily memory
 Insert largebin to the largebin list
 ```c
@@ -208,6 +208,7 @@ Insert largebin to the largebin list
 Rewrite the fwd's bk and bk_nextsize.
 * `victim->bk_nextsize = fwd->bk_nextsize;` and `victim->bk_nextsize->fd_nextsize = victim;` can write the victim address to arbitrarily address.
 * `bck = fwd->bk;` and `bck->fd = victim;` can write the victim address to arbitrarily address.
+[2018 0ctf heapstorm2](https://www.anquanke.com/post/id/183877)
 
 # unsorted bin attack 
 Exploiting the overwrite of a freed chunk on unsorted bin freelist to write a unsortedbin freelist address into arbitrary address.<br>
