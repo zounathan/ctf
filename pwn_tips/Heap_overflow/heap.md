@@ -309,6 +309,9 @@ assert(P->fd->bk == P) assert(P->bk->fd == P)
 1. malloc large bin
 2. Free the small bin, if the next chunk is the top chunk.
 
+# Tcache
+After the glibc-2.26, Tcache is introduced.
+
 # Reference
 * https://blog.csdn.net/zdy0_2004/article/details/51485198
 * https://sploitfun.wordpress.com/2015/02/10/understanding-glibc-malloc/comment-page-1/
