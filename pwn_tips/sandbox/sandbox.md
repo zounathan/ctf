@@ -158,7 +158,7 @@ $ seccomp-tools dump ./pwn
  0009: 0x06 0x00 0x00 0x7fff0000  return ALLOW
  ```
 
-### 不想手写bpf，但是又想用bpf这种形式？
+### bpf生成
 * [Kafel](https://github.com/google/kafel) is a language and library for specifying syscall filtering policies. The policies
 are compiled into BPF code that can be used with seccomp-filter.
 * [seccomp_export_bpf](http://homura.cc/blog/archives/145)导出规则
@@ -173,77 +173,82 @@ are compiled into BPF code that can be used with seccomp-filter.
 	1. 首先在转换arch前把栈迁移走,例如shellcode自己开个.bss段
 	2. 转换架构
 	3. 使用转换完之后的架构的汇编写
-* 案例：Tokyo Westerns MMA 2016 - Diary
+* [Tokyo Westerns MMA 2016 - Diary](https://ctftime.org/task/2756)
+
 ### x32模式
 * x32模式是在x86-64下的一种特殊模式,使用64位寄存器+32位地址
-* x32中nr会加__x32_SYSCALL_BIT (0x40000000)，`/usr/include/asm/unistd_x32.h`，即原本的syscall number +0x40000000,是完全一样的作用
+* x32模式中nr会加__x32_SYSCALL_BIT (0x40000000)，`/usr/include/asm/unistd_x32.h`，即原本的syscall number +0x40000000,是完全一样的作用
 
 ### 特殊syscall
 * 几个奇怪的系统调用号，虽然是给x32用的,但是x86-64下一样用，比如`520号`也是系统调用
 
 # ptrace
 ## ptrace的功能
-* process trace
-	* 作为tracer来追踪tracee的执行
-	* 拦截特定事件(TRAP, SYSCALL)
-	* 读写tracee的内存，cpu上下文等
-	* 使用ptrace来实现的为人所熟知的工具:gdb (strace也是)
+* 作为tracer来追踪tracee的执行
+* 拦截特定事件(TRAP, SYSCALL)
+* 读写tracee的内存，cpu上下文等
+* 使用ptrace来实现的为人所熟知的工具:gdb (strace也是)
 
-## trace子进程的执行
-* Child中call ptrace(PTRACE_TRACEME)
-* Parent中使用waitpid(pid)等待event发生
-* 使用ptrace(PTRACE_CONT)继续执行
-* 如果没有遇到断点0xCC，会一直跑
-* 要trace syscall时,可以用ptrace(PTRACE_SYSCALL)
-* 使用ptrace(PTRACE_PEEKUSER)来读取cpu的上下文
-* addr 为struct user中的offset
-* sys/user.h(https://code.woboq.org/userspace/glibc/sysdeps/unix/sysv/linux/x86/sys/user.h.html)
-* orig_rax为syscall number
-* Syscall 会分别在enter和exit时各中断一次(有趣的一点)
-* ptrace syscall的时候会断两次，进入退出都会各断一次
-* Exit时可以从rax取得返回值
-
-## 用ptrace来读取tracee的内存
-* ptrace(PTRACE_PEEKDATA)
-* 固定读一个word(4byte)
+## trace子进程
+* ptrace函数
 ```c
-long rax = ptrace(PTRACE_PEEKUSER, pid, offsetof(struct user, regs.rax), 0);
-int d = ptrace(PTRACE_PEEKDATA, pid, rax, 0);
+long ptrace(enum __ptrace_request request, pid_t pid, void *addr, void *data);
 ```
+* request的取值
+```c
+PTRACE_TRACEME		//本进程被其父进程所跟踪。其父进程应该希望跟踪子进程。
+PTRACE_PEEKTEXT		//从内存地址中读取一个字节，内存地址由addr给出。 
+PTRACE_PEEKDATA		//从内存地址中读取一个字节，内存地址由addr给出。 
+PTRACE_PEEKUSER		//从USER区域中读取一个字节，偏移量为addr。
+PTRACE_POKETEXT		//往内存地址中写入一个字节。内存地址由addr给出。 
+PTRACE_POKEDATA		//往内存地址中写入一个字节。内存地址由addr给出。
+PTRACE_POKEUSER		//往USER区域中写入一个字节。偏移量为addr。
+PTRACE_CONT		//继续运行
+PTRACE_SYSCALL		//跟踪系统调用
+PTRACE_SINGLESTEP	//设置单步执行标志
+PTRACE_ATTACH		//跟踪指定pid 进程。
+PTRACE_DETACH		//结束跟踪
+
+Intel386特有：
+PTRACE_GETREGS		//读取寄存器
+PTRACE_GETFPREGS	//读取浮点寄存器
+PTRACE_SETREGS		//设置寄存器
+PTRACE_SETFPREGS	//设置浮点寄存器
+```
+* Child中调用`ptrace(PTRACE_TRACEME)`，Parent中使用`waitpid(pid)`等待`SIGTRAP`发生
+* Child遇到断点`int 3(机器码0xCC)`会中断，等待Parent。通过改代码段可以实现任意地址断点功能。
+* 要trace syscall时,可以用`ptrace(PTRACE_SYSCALL)`，Child在每次系统调用开始和结束时中断。
 
 ## 绕过ptrace
-### 通过fork脱离tracer
-* ptrace默认只trace最初trace_me的那个进程，利用fork,使得fork出来的进程不会被
-继续trace
-* 如果不做特定处理的情况下，child如果有fork过，tracer并不会再去trace那个新的
-fork出来的子进程
-* 只要ptrace 没有跟踪好fork,vfork,clone, fork后child都不会被ptrace继续跟踪
-* 正确的做法?
-* 跟踪好fork或者直接禁止直接fork
-* 设PTRACE_O_TRACECLONE选项,有fork类操作时候可以跟到
+### fork脱离tracer
+* ptrace默认只trace最初PTRACE_TRACEME的那个进程，利用fork，使得fork出来的进程不会被继续trace
+* 只要ptrace没有跟踪好fork,vfork,clone, fork后child都不会被ptrace继续跟踪
 
-### 通过杀父进程脱离tracer
-* Kill Parent by
-* kill(getpid(), 9)
-* ppid 无法取得时,可以尝试pid-1
-* /proc/self/stat中可以拿到pid和ppid
-* kill(-1,9)可以干掉除了自己以外的process
+* 正确的做法
+	* 跟踪好fork或者直接禁止直接fork
+	* 设`PTRACE_O_TRACECLONE`选项,有fork类操作时候可以跟到
+
+### 杀父进程脱离tracer
+* 通过kill杀掉父进程`kill(getppid(), 9)`
+* `ppid`无法取得时,可以尝试`pid-1`，也可以在`/proc/self/stat`中可以拿到pid和ppid
+* `kill(-1,9)`可以干掉除了自己以外的进程（可以用来杀马）
+
 * 正确做法？
-* 设好PTRACE_O_EXITKILL可以让tracer结束时把所有tracee kill掉
+	* 设`PTRACE_O_EXITKILL`可以让tracer结束时把所有tracee kill掉
 
-其他常见可用于实现类似沙箱功能的工具
+# 其他常见可用于实现类似沙箱功能的工具
 * 细粒度的指令插桩类工具
-* Intel Pintool
-* DynamoRIO
-* Edge浏览器使用AppContainer
-* The Awesome AppJailLaucher 也用AppContainer实现
+	* Intel Pintool
+	* DynamoRIO
+* AppContainer（Edge浏览器，The Awesome AppJailLaucher）
 * Chrome浏览器windows沙箱
 * A restricted token
 * The Windows job object
 * The Windows desktop object
 * The integrity levels
 * SELinux
-* mandatory access control/discretionary access control
-* ...
+	* MAC(mandatory access control)
+	* DAC(discretionary access control)
 
+# Reference
 https://veritas501.space/2018/05/05/seccomp%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/
