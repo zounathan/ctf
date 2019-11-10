@@ -177,7 +177,7 @@ are compiled into BPF code that can be used with seccomp-filter.
 
 ### x32模式
 * x32模式是在x86-64下的一种特殊模式,使用64位寄存器+32位地址
-* x32模式中nr会加__x32_SYSCALL_BIT (0x40000000)，`/usr/include/asm/unistd_x32.h`，即原本的syscall number +0x40000000,是完全一样的作用
+* x32模式中nr会加`__x32_SYSCALL_BIT (0x40000000)`，`/usr/include/asm/unistd_x32.h`，即原本的`syscall number +0x40000000`,是完全一样的作用
 
 ### 特殊syscall
 * 几个奇怪的系统调用号，虽然是给x32用的,但是x86-64下一样用，比如`520号`也是系统调用
