@@ -19,13 +19,13 @@ seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(mmap), 0);
 seccomp_load(ctx);
 ```
 ### prctl
-1. 设置`PR_SET_NO_NEW_PROVS`为1，否则execve之后的进程将脱离这个bpf的限制。
+1. 设置`PR_SET_NO_NEW_PROVS`为1，否则execve之后的进程将脱离这个bpf的限制。</br>
 `prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0)`
-2. 设置seccomp类型，如`prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &prog)`，第三个参数为bpf内容。</br>
+2. 设置seccomp类型，如`prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &prog)`，第三个参数为bpf内容，可从内存直接dump。</br>
 prctl的两种模式
-* SECCOMP_MODE_STRICT
+* SECCOMP_MODE_STRICT</br>
 严格模式,只允许read/write/exit
-* SECCOMP_MODE_FILTER
+* SECCOMP_MODE_FILTER</br>
 Filter模式，设置黑白名单，需自己编写bpf(Berkeley Packet Filter)规则
 
 ## Berkeley Packet Filter
@@ -142,6 +142,21 @@ BPF_STMT(BPF_MISC | BPF_TXA)                A <- X      // 将X中的值存入A�
 * libseccomp有自带的反编译工具，[scmp_bpf_disasm](https://github.com/seccomp/libseccomp/blob/master/tools/scmp_bpf_disasm.c)
 `./scmp_bpf_disasm < dump`，可以对照头文件来进行阅读
 * 使用[seccomp-tools](https://rubygems.org/gems/seccomp-tools)
+```
+$ seccomp-tools dump ./pwn
+ line  CODE  JT   JF      K
+=================================
+ 0000: 0x20 0x00 0x00 0x00000004  A = arch
+ 0001: 0x15 0x00 0x06 0xc000003e  if (A != ARCH_X86_64) goto 0008
+ 0002: 0x20 0x00 0x00 0x00000000  A = sys_number
+ 0003: 0x35 0x04 0x00 0x40000000  if (A >= 0x40000000) goto 0008
+ 0004: 0x15 0x04 0x00 0x00000001  if (A == write) goto 0009
+ 0005: 0x15 0x03 0x00 0x00000000  if (A == read) goto 0009
+ 0006: 0x15 0x02 0x00 0x00000002  if (A == open) goto 0009
+ 0007: 0x15 0x01 0x00 0x0000003c  if (A == exit) goto 0009
+ 0008: 0x06 0x00 0x00 0x00000000  return KILL
+ 0009: 0x06 0x00 0x00 0x7fff0000  return ALLOW
+ ```
 
 ### 不想手写bpf，但是又想用bpf这种形式？
 * [Kafel](https://github.com/google/kafel) is a language and library for specifying syscall filtering policies. The policies
