@@ -1,6 +1,6 @@
 SandBox
 =
-# Seccomp(secure computing)
+# Seccomp
 * 一般用作在linux下实现沙箱。chrome,firefox在linux下的沙箱就是seccomp做的
 * 可以限制用户可以使用的syscall,白名单黑名单皆可。遇上不同的syscall时要采取什么措施(kill,allow,trap等)
 * 稍微复杂的操作:可以利用filter来进行简单的计算以及条件判断;
