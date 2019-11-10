@@ -44,7 +44,7 @@ Content
     * [tcache house of spirit](./Heap_overflow/heap_skills.md#tcache_house_of_spirit)
 * [unlink](./Heap_overflow/heap_skills.md#unlink)
 * [off-by-one](./Heap_overflow/heap_skills.md#off-by-one)
-    * [off-by-one overwrite allocated]()](./Heap_overflow/heap_skills.md#off-by-one_overwrite_allocated)
+    * [off-by-one overwrite allocated](./Heap_overflow/heap_skills.md#off-by-one_overwrite_allocated)
     * [off-by-one overwrite freed](./Heap_overflow/heap_skills.md#off-by-one_overwrite_freed)
     * [off-by-one null byte](./Heap_overflow/heap_skills.md#off-by-one_null_byte)
 * [Largebin attack](./Heap_overflow/heap_skills.md#Largebin_attack)
