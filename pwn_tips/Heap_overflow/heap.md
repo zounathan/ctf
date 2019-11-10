@@ -336,9 +336,8 @@ Tcache(tcache_perthread_struct) is also a chunk in the heap, which size is `size
 
 * The fd of the chunk in tcache list points to the n`ext chunk's fd address`, instead of the presize address.
 * Unlike the fastbin, chunk mallocced from tcache don't check the size.
-```
-static void
-tcache_put (mchunkptr chunk, size_t tc_idx)
+```c
+static void tcache_put (mchunkptr chunk, size_t tc_idx)
 {
   tcache_entry *e = (tcache_entry *) chunk2mem (chunk);
   assert (tc_idx < TCACHE_MAX_BINS);
@@ -347,8 +346,7 @@ tcache_put (mchunkptr chunk, size_t tc_idx)
   ++(tcache->counts[tc_idx]);
 }
 
-static void *
-tcache_get (size_t tc_idx)
+static void *tcache_get (size_t tc_idx)
 {
   tcache_entry *e = tcache->entries[tc_idx];
   assert (tc_idx < TCACHE_MAX_BINS);
