@@ -21,6 +21,7 @@ For 32 bit systems:
 For 64 bit systems:
      Number of arena = 8 * number of cores + 1.
  ```
+ 
 ## Multiple Arena
 * When main thread, calls malloc for the first time already created main arena is used without any contention.
 * When thread 1 and thread 2 calls malloc for the first time, a new arena is created for them and its used without any contention. Until this point threads and arena have one-to-one mapping.
@@ -91,23 +92,6 @@ struct malloc_state
   /* Memory allocated from the system in this arena.  */
   INTERNAL_SIZE_T system_mem;
   INTERNAL_SIZE_T max_system_mem;
-};
-```
-
-### malloc_chunk
-* Chunk Header – A heap is divided into many chunks based on user requests. Each of those chunks has its own chunk header.
-```c
-struct malloc_chunk {
-
-  INTERNAL_SIZE_T      prev_size;  /* Size of previous chunk (if free).  */
-  INTERNAL_SIZE_T      size;       /* Size in bytes, including overhead. */
-
-  struct malloc_chunk* fd;         /* double links -- used only if free. */
-  struct malloc_chunk* bk;
-
-  /* Only used for large blocks: pointer to next larger size.  */
-  struct malloc_chunk* fd_nextsize; /* double links -- used only if free. */
-  struct malloc_chunk* bk_nextsize;
 };
 ```
 
