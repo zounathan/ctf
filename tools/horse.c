@@ -8,8 +8,8 @@
 #include <arpa/inet.h>
 
 # define GET_FLAG 		50000
-# define CLEAN_HORSE	10000
-# define CHECK_HORSE	1000
+# define CLEAN_HORSE		10000
+# define CHECK_HORSE		1000
 //To Get Flag
 # define DESTPORT		8888
 # define DESTIP			"127.0.0.1"
